@@ -26,6 +26,13 @@ typedef struct		s_node
 	struct s_node	*next;
 }					t_node;
 
+typedef struct		s_player
+{
+	int				x_pl;
+	int				y_pl;
+	float			angle;
+}					s_player;
+
 typedef struct		s_wolf
 {
 	void			*mlx;

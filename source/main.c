@@ -132,11 +132,19 @@ void	read_map(t_wolf *wolf, char *name)
 	//exit(0);
 }
 
+void	press_left(t_wolf *wold)
+{
+	
+}
+
 int		press_key(int key, t_wolf *wolf)
 {
 	ft_printf("key = {%d}\n", key);
 	if (key == K_ESC)
 		sys_err("Normal exit.\n");
+	if (key == K_LEFT)
+		press_left(wolf);
+
 	return (0);
 }
 
