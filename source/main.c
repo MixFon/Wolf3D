@@ -3,6 +3,9 @@
 
 void	init(t_wolf *wolf)
 {
+	wolf->pl.x_pl = 40;
+	wolf->pl.y_pl = 100;
+	wolf->pl.angle = 0;
 	wolf->bits_adr = 4;
 	wolf->size_adr = WIDTH;
 	wolf->endian = 0;
@@ -134,7 +137,37 @@ void	read_map(t_wolf *wolf, char *name)
 
 void	press_left(t_wolf *wold)
 {
-	
+		
+}
+
+void	drow_vertical_line(t_wolf *wolf, int x, int h)
+{
+	int		j;
+	t_point point;
+
+	j = (HEIGHT / 2) - (h / 2);
+	point.color = 0xFFFF;
+	point.x = x;
+	while (++j < (HEIGHT / 2) + (h / 2))
+	{
+		point.y = j;
+		put_pixel_adr(wolf, point);
+	}
+}
+
+void	press_enter(t_wolf *wolf)
+{
+	int		i;
+	int		h;
+
+	i = -1;
+	h = 1000;
+	while (++i < WIDTH)
+	{
+		drow_vertical_line(wolf, i, h);
+		h--;
+	}
+	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_ptr,0 ,0);
 }
 
 int		press_key(int key, t_wolf *wolf)
@@ -144,7 +177,8 @@ int		press_key(int key, t_wolf *wolf)
 		sys_err("Normal exit.\n");
 	if (key == K_LEFT)
 		press_left(wolf);
-
+	if (key == K_ENTER)
+		press_enter(wolf);
 	return (0);
 }
 
