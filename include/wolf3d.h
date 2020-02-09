@@ -13,6 +13,7 @@
 
 # define SQUARE		64
 
+# define K_ENTER	36
 # define K_ESC		53
 # define K_LEFT		123
 # define K_UP		126
@@ -43,6 +44,7 @@ typedef struct		s_wolf
 	int				endian;
 	char			*data_adr;
 	int				**map;
+	s_player		pl;
 }					t_wolf;
 
 typedef struct		s_point
