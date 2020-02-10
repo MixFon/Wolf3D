@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/10 12:58:15 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/10 18:43:35 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 void	init(t_wolf *wolf)
 {
-	wolf->pl.x_pl = 80;
-	wolf->pl.y_pl = 80;
-	wolf->pl.angle = 0;
+	wolf->pl.x_pl = 48;
+	wolf->pl.y_pl = 112;
+	wolf->pl.angle = 10;
 	wolf->bits_adr = 4;
 	wolf->size_adr = WIDTH;
 	wolf->endian = 0;
@@ -146,18 +146,17 @@ void	read_map(t_wolf *wolf, char *name)
 	//exit(0);
 }
 
-void	press_left(t_wolf *wold)
-{
-		
-}
 
-void	drow_vertical_line(t_wolf *wolf, int x, int h)
+void	drow_vertical_line(t_wolf *wolf, int x, int h, double angle)
 {
 	int		j;
 	t_point point;
 
 	j = (HEIGHT / 2) - (h / 2);
-	point.color = 0xFFFF;
+	if (angle < 0)
+		point.color = 0xFFFF;
+	else
+		point.color = 0xFF;
 	point.x = x;
 	while (++j < (HEIGHT / 2) + (h / 2))
 	{
@@ -173,7 +172,9 @@ int		check_wall_vert(t_wolf *wolf, int x_gl, int y_gl)
 
 	x = x_gl / SQUARE;
 	y = y_gl / SQUARE;
-	ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
+	if (x < 0 || y < 0 || y > 6 || x > 6)
+		return (1);
+	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
 	if (wolf->map[y][x] == 1 || wolf->map[y][x - 1] == 1)
 	{
 		ft_printf("wolf->map[x][y] = {%d}\n", wolf->map[y][x]);
@@ -190,8 +191,8 @@ int		check_wall_gor(t_wolf *wolf, int x_gl, int y_gl)
 
 	x = x_gl / SQUARE;
 	y = y_gl / SQUARE;
-	ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
-	if (y >= 7)
+	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
+	if (x < 0 || y < 0 || y > 6 || x > 6)
 		return (1);
 	if (wolf->map[y][x] == 1 || wolf->map[y - 1][x] == 1)
 	{
@@ -199,17 +200,6 @@ int		check_wall_gor(t_wolf *wolf, int x_gl, int y_gl)
 		ft_printf("GOR Yes!! Wall x = [%d] y = {%d}\n", x, y);
 		return (1);
 	}
-	return (0);
-}
-
-int		min_len_rey(t_wolf *wolf, t_point *ver, t_point *gor)
-{
-	int len_rey;	
-	int len_rey2;	
-
-	len_rey = sqrt(pow(ver->x - wolf->pl.x_pl, 2) - pow(ver->y - wolf->pl.y_pl, 2));
-	len_rey2 = sqrt(pow(gor->x - wolf->pl.x_pl, 2) - pow(gor->y - wolf->pl.y_pl, 2));
-	ft_printf("len_rey = [%d] len_rey2 = {%d}\n", len_rey, len_rey2);
 	return (0);
 }
 
@@ -228,7 +218,8 @@ int		get_len_ray_gor(t_wolf *wolf, double k, double b)
 		gor.y += SQUARE;
 	}
 	ft_printf("gor.x = [%d] gor.y = {%d}\n", gor.x, gor.y);
-	return (sqrt(pow(gor.x - wolf->pl.x_pl, 2) - pow(gor.y - wolf->pl.y_pl, 2)));
+	ft_printf("Hello\n");
+	return (sqrt(pow(gor.x - wolf->pl.x_pl, 2) + pow(gor.y - wolf->pl.y_pl, 2)));
 }
 
 int		get_len_ray_ver(t_wolf *wolf, double k, double b)
@@ -244,43 +235,93 @@ int		get_len_ray_ver(t_wolf *wolf, double k, double b)
 		ver.x += SQUARE;
 	}
 	ft_printf("ver.x = [%d] ver.y = {%d}\n", ver.x, ver.y);
-	return (sqrt(pow(ver.x - wolf->pl.x_pl, 2) - pow(ver.y - wolf->pl.y_pl, 2)));
+	return (sqrt(pow(ver.x - wolf->pl.x_pl, 2) + pow(ver.y - wolf->pl.y_pl, 2)));
 }
 
-int		get_wall_height(t_wolf *wolf, int i)
+int		get_wall_height(t_wolf *wolf, double angle)
 {
 	double	k;	
 	double	b;
 	int		h_v;
 	int		h_g;
+	int		bl;
 
-	k = tan(20*M_PI/180);
+	if (angle > 90)
+		angle = -1 * (180 - angle);
+	k = tan(angle*M_PI/180);
+	bl = 0;
+	//k = tan(angle);
+	if (angle < 0)
+		k = k * (-1);
 	//k = tan(15.9454*M_PI/180);
 	//k = tan(0*M_PI/180);
 	b = wolf->pl.y_pl - k * wolf->pl.x_pl;
 	h_v = get_len_ray_ver(wolf, k, b);
 	h_g = get_len_ray_gor(wolf, k, b);
-	ft_printf("h_v = [%d] h_g = {%d}\n", h_v, h_g);
+	ft_printf("Hello2\n");
+	//ft_printf("h_v = [%d] h_g = {%d}\n", h_v, h_g);
 	return ((h_v < h_g) ? h_v : h_g);
 	//ft_printf("tan(-30) = {%f}\n", tan(330*M_PI/180));
-	return (0);
+}
+
+void	clear_image(t_wolf *wolf)
+{
+	char	*temp;
+	int		i;
+
+	temp = wolf->data_adr;
+	i = -1;
+	while (++i < WIDTH * 4 * HEIGHT)
+		temp[i] = 0;
 }
 
 void	press_enter(t_wolf *wolf)
 {
 	int		i;
 	int		h;
+	double	angle;
+	double	da;
+	double	H;
+	double	R;
 
 	i = -1;
-	h = 100;
+	//h = 100;
+	angle = wolf->pl.angle + 30;
+	//angle = wolf->pl.angle + M_PI / 6;
+	//da = (M_PI / 3) / WIDTH;
+	da = 60.0 / WIDTH;
+	//exit(0);
 	while (++i < WIDTH)
 	{
-		h = get_wall_height(wolf, i);
-		drow_vertical_line(wolf, i, h);
-		//h--;
-		exit(0);
+		//ft_printf("da {%lf}\n", da);
+		ft_printf("angle {%f}\n", angle);
+		h = get_wall_height(wolf, angle);
+		ft_printf("Hello3\n");
+		h = h * cos(angle*M_PI/180);
+		if (h == 0)
+			h = 1;
+		ft_printf("Hello4\n");
+		ft_printf("h = [%f}\n", h);
+		H = SQUARE * HEIGHT / h ;
+		ft_printf("Hello5\n");
+		//drow_vertical_line(wolf, i, h, angle);
+		drow_vertical_line(wolf, i, H, angle);
+		angle -= da;
 	}
 	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_ptr,0 ,0);
+	clear_image(wolf);
+}
+
+void	press_left(t_wolf *wolf)
+{
+	wolf->pl.angle -= 10;
+	press_enter(wolf); 
+}
+
+void	press_right(t_wolf *wolf)
+{
+	wolf->pl.angle += 10;
+	press_enter(wolf); 
 }
 
 int		press_key(int key, t_wolf *wolf)
@@ -290,6 +331,8 @@ int		press_key(int key, t_wolf *wolf)
 		sys_err("Normal exit.\n");
 	if (key == K_LEFT)
 		press_left(wolf);
+	if (key == K_RIGHT)
+		press_right(wolf);
 	if (key == K_ENTER)
 		press_enter(wolf);
 	return (0);
