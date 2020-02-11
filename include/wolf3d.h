@@ -13,7 +13,7 @@
 
 # define SQUARE		32
 
-# define STEP		8
+# define STEP		4
 
 # define K_ENTER	36
 # define K_ESC		53
