@@ -2,8 +2,8 @@
 # define WOLF3D_H
 
 # include "../libft/libft.h"
-# include "limits.h"
 # include "../minilibx_macos/mlx.h"
+# include "math.h"
 
 # define WIDTH		1024
 # define HEIGHT		720
@@ -11,7 +11,9 @@
 # define HALFWID	750
 # define HALFHEI	500
 
-# define SQUARE		64
+# define SQUARE		32
+
+# define STEP		8
 
 # define K_ENTER	36
 # define K_ESC		53
@@ -31,7 +33,7 @@ typedef struct		s_player
 {
 	int				x_pl;
 	int				y_pl;
-	float			angle;
+	int				angle;
 }					s_player;
 
 typedef struct		s_wolf
