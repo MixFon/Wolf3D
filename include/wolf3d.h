@@ -11,7 +11,7 @@
 # define HALFWID	750
 # define HALFHEI	500
 
-# define SQUARE		32
+# define SQUARE		64
 
 # define STEP		4
 
@@ -33,7 +33,8 @@ typedef struct		s_player
 {
 	int				x_pl;
 	int				y_pl;
-	int				angle;
+	int				pov;		// point of view (угол направления взгляда)
+	int				fov;		// field  of view (угол обзора)
 }					s_player;
 
 typedef struct		s_wolf
@@ -46,6 +47,9 @@ typedef struct		s_wolf
 	int				endian;
 	char			*data_adr;
 	int				**map;
+	long double		*cos_arr;
+	//long double		delta_fov;
+	long double		delta_wid;
 	s_player		pl;
 }					t_wolf;
 

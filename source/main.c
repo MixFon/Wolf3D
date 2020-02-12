@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/11 15:40:32 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/12 15:35:10 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,14 @@
 
 void	init(t_wolf *wolf)
 {
-	wolf->pl.x_pl = 112;
-	wolf->pl.y_pl = 112;
-	wolf->pl.angle = 0;
+	wolf->pl.x_pl = 224;
+	wolf->pl.y_pl = 224;
+	wolf->pl.pov = 0;
+	wolf->pl.fov = 60.0;
 	wolf->bits_adr = 4;
+	wolf->cos_arr = NULL;
+//	wolf->delta_fov = 0.0;
+	wolf->delta_wid = 0.0;
 	wolf->size_adr = WIDTH;
 	wolf->endian = 0;
 	wolf->mlx = mlx_init();
@@ -152,14 +156,14 @@ void	drow_vertical_line(t_wolf *wolf, int x, double h, double angle)
 	double		j;
 	int		i;
 	t_point point;
-
-	j = (HEIGHT / 2) - (h / 2);
+	
+	j = (HEIGHT / 2.0) - (h / 2.0);
 	if (angle < 0)
 		point.color = 0xFF;
 	else
 		point.color = 0xFFFF;
 	point.x = x;
-	while (++j < (HEIGHT / 2) + (h / 2))
+	while (++j < (HEIGHT / 2.0) + (h / 2.0))
 	{
 		point.y = j;
 		put_pixel_adr(wolf, point);
@@ -209,7 +213,7 @@ double		get_len_ray_gor(t_wolf *wolf, double k, double b, double angle)
 	t_point	gor;
 	int		tmp;
 
-	if ((angle > 0 && angle < 180) || (angle < -180 && angle > -360))
+	if ((angle > 0 && angle < 180) || (angle < -180 && angle > -360) || angle > 360)
 	{
 		tmp = SQUARE;
 		gor.y = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE + SQUARE;
@@ -219,8 +223,6 @@ double		get_len_ray_gor(t_wolf *wolf, double k, double b, double angle)
 		tmp = (-1) * SQUARE;
 		gor.y = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE;// + SQUARE;
 	}
-	if (k == 0)
-		return (0);
 	while (1)
 	{
 		gor.x = (gor.y - wolf->pl.y_pl) / k + wolf->pl.x_pl;
@@ -256,6 +258,7 @@ double		get_len_ray_ver(t_wolf *wolf, double k, double b, double angle)
 		ver.x += tmp;//SQUARE;
 	}
 	//ft_printf("ver.x = [%d] ver.y = {%d}\n", ver.x, ver.y);
+	ft_printf("ver.y = [%d] \n",ver.y & 0x1f);
 	return (sqrt(pow(ver.x - wolf->pl.x_pl, 2) + pow(ver.y - wolf->pl.y_pl, 2)));
 }
 
@@ -265,12 +268,12 @@ double		get_wall_height(t_wolf *wolf, double angle)
 	double	b;
 	double	h_v;
 	double	h_g;
-	int		bl;
 
 	//if (angle > 90)
 	//	angle = -1 * (180 - angle);
 	k = tan(angle*M_PI/180);
-	bl = 0;
+	if (k == 0)
+		return (get_len_ray_ver(wolf, k, b, angle));
 	//k = tan(angle);
 	//if (angle < 0)
 	//	k = k * (-1);
@@ -298,41 +301,33 @@ void	clear_image(t_wolf *wolf)
 void	press_enter(t_wolf *wolf)
 {
 	int		i;
-	double	h;
+	long double	h;
 	int		z;
 	double	angle;
-	double	da;
-	double	delta;
 	double	H;
 	double	R;
 
 	i = -1;
-	delta = 30.0;
-	//h = 100;
-	angle = wolf->pl.angle - 30;
+	angle = wolf->pl.pov - wolf->pl.fov / 2; //Определяем начальный угол отрисовки.
 	//angle = wolf->pl.angle + M_PI / 6;
-	//da = (M_PI / 3) / WIDTH;
-	da = 60.0 / WIDTH;
-	//exit(0);
 	while (++i < WIDTH)
 	{
-		//ft_printf("da {%lf}\n", da);
-		//ft_printf("delta {%f}\n", delta);
 		//ft_printf("cos(delta) {%f}\n", cos(delta*M_PI/180));
 		h = get_wall_height(wolf, angle);
 		//ft_printf("h = {%f}\n", h);
-		h = h * cos(delta*M_PI/180);
-		h = fabs(h);
+		//h = h * cos(delta*M_PI/180);
+		h = h * wolf->cos_arr[i];
+		//h = fabs(h);
 		//ft_printf("h = {%d}\n", h);
-		if (h == 0)
-			h = 0.5;
-		H = SQUARE * 928 / h;
+		//if (h == 0)
+		//	h = 1;
+		H = SQUARE * 928.0 / h;
+		//ft_printf("H {%f}\n", H);
 		//H = SQUARE * 100 / h ;
 		//drow_vertical_line(wolf, i, h, angle);
 		//H = ceil(H);
 		drow_vertical_line(wolf, i, H, angle);
-		angle += da;
-		delta -= da;
+		angle += wolf->delta_wid;
 	}
 	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_ptr,0 ,0);
 	clear_image(wolf);
@@ -340,32 +335,32 @@ void	press_enter(t_wolf *wolf)
 
 void	press_left(t_wolf *wolf)
 {
-	wolf->pl.angle -= 10;
-	wolf->pl.angle = wolf->pl.angle % 360;
+	wolf->pl.pov -= 10;
+	wolf->pl.pov = wolf->pl.pov % 360;
 	press_enter(wolf); 
 }
 
 void	press_right(t_wolf *wolf)
 {
-	wolf->pl.angle += 10;
-	wolf->pl.angle = wolf->pl.angle % 360;
+	wolf->pl.pov += 10;
+	wolf->pl.pov = wolf->pl.pov % 360;
 	press_enter(wolf); 
 }
 
 void	press_up(t_wolf *wolf)
 {
-	wolf->pl.x_pl += STEP * cos(wolf->pl.angle*M_PI/180);
-	wolf->pl.y_pl += STEP * sin(wolf->pl.angle*M_PI/180);
-	ft_printf("angle [%f]\n", wolf->pl.angle);
+	wolf->pl.x_pl += STEP * cos(wolf->pl.pov*M_PI/180);
+	wolf->pl.y_pl += STEP * sin(wolf->pl.pov*M_PI/180);
+	ft_printf("angle [%f]\n", wolf->pl.pov);
 	ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
 }
 
 void	press_down(t_wolf *wolf)
 {
-	wolf->pl.x_pl -= STEP * cos(wolf->pl.angle*M_PI/180);
-	wolf->pl.y_pl -= STEP * sin(wolf->pl.angle*M_PI/180);
-	ft_printf("angle [%f]\n", wolf->pl.angle);
+	wolf->pl.x_pl -= STEP * cos(wolf->pl.pov*M_PI/180);
+	wolf->pl.y_pl -= STEP * sin(wolf->pl.pov*M_PI/180);
+	ft_printf("angle [%f]\n", wolf->pl.pov);
 	ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
 }
@@ -388,6 +383,25 @@ int		press_key(int key, t_wolf *wolf)
 	return (0);
 }
 
+void	calculate_tan_cos(t_wolf *wolf)
+{
+	int		i;
+	double	angle;
+	double	delta;
+	double	da;
+
+	i = -1;	
+	delta = (double)wolf->pl.fov / 2;
+	wolf->delta_wid = (double)wolf->pl.fov / WIDTH;
+	if (!(wolf->cos_arr = (long double*)malloc(sizeof(long double) * WIDTH)))
+		sys_err("Error malloc.\n");
+	while(++i < WIDTH)
+	{
+		wolf->cos_arr[i] = cosl(delta * M_PI / 180);
+		delta -= wolf->delta_wid;
+	}
+}
+
 int		main(int ac, char **av)
 {
 	t_wolf wolf;
@@ -396,6 +410,7 @@ int		main(int ac, char **av)
 		sys_err("Two arguments.\n");
 	init(&wolf);
 	read_map(&wolf, av[1]);
+	calculate_tan_cos(&wolf);
 	mlx_key_hook(wolf.window, press_key, &wolf);
 	//mlx_loop_hook(wolf.mlx, work_operators, &wolf);
 	mlx_loop(wolf.mlx);
