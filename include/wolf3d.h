@@ -22,12 +22,17 @@
 # define K_RIGHT	124
 # define K_DOWN		125
 
-typedef struct		s_node
+# define PATH		"/Users/widraugr/MyFile/File42/Wolf3D/texture/WALL26.xpm"
+
+typedef struct		s_ray
 {
-	int				data;
-	int				number;
-	struct s_node	*next;
-}					t_node;
+	long double		x_wall;
+	long double		y_wall;		
+	long double		distance;	//растояние до пересечения.
+	int				x_squre;
+	int				y_squre;
+	int				ver : 2;
+}					t_ray;
 
 typedef struct		s_player
 {
@@ -37,20 +42,27 @@ typedef struct		s_player
 	int				fov;		// field  of view (угол обзора)
 }					s_player;
 
+typedef struct		s_image
+{
+	int				wid;
+	int				hei;
+	void			*img_ptr;
+	int				bits_adr;
+	int				size_adr;
+	char			*data_adr;
+	int				endian;
+}					t_image;
+
 typedef struct		s_wolf
 {
 	void			*mlx;
 	void			*window;
-	void			*img_ptr;
-	int				bits_adr;
-	int				size_adr;
-	int				endian;
-	char			*data_adr;
 	int				**map;
 	long double		*cos_arr;
-	//long double		delta_fov;
 	long double		delta_wid;
 	s_player		pl;
+	t_image			img;
+	t_image			wall;
 }					t_wolf;
 
 typedef struct		s_point
@@ -60,4 +72,5 @@ typedef struct		s_point
 	int				color;
 }					t_point;
 
+void	clear_image(t_image *img_ptr);
 #endif

@@ -6,11 +6,36 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/12 15:35:10 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/13 19:51:17 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/wolf3d.h"
+
+void	init_image_in_file_xpm(void *mlx, t_image *img, int size_squere , char *path)
+{
+	img->wid = size_squere;
+	img->hei = size_squere;
+	img->bits_adr = 4;
+	img->size_adr = size_squere;
+	img->endian = 0;
+	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx, path, &img->wid, &img->hei)))
+		sys_err("Error image back.\n");
+	img->data_adr = mlx_get_data_addr(img->img_ptr,
+			&img->bits_adr, &img->size_adr, &img->endian);
+}
+
+void	init_image(void *mlx, t_image *img, int width , int height)
+{
+	img->wid = width;
+	img->hei = height;
+	img->bits_adr = 4;
+	img->size_adr = width;
+	img->endian = 0;
+	img->img_ptr = mlx_new_image(mlx, width, height);
+	img->data_adr = mlx_get_data_addr(img->img_ptr,
+			&img->bits_adr, &img->size_adr, &img->endian);
+}
 
 void	init(t_wolf *wolf)
 {
@@ -18,17 +43,13 @@ void	init(t_wolf *wolf)
 	wolf->pl.y_pl = 224;
 	wolf->pl.pov = 0;
 	wolf->pl.fov = 60.0;
-	wolf->bits_adr = 4;
 	wolf->cos_arr = NULL;
-//	wolf->delta_fov = 0.0;
 	wolf->delta_wid = 0.0;
-	wolf->size_adr = WIDTH;
-	wolf->endian = 0;
+//	wolf->delta_fov = 0.0;
 	wolf->mlx = mlx_init();
 	wolf->window = mlx_new_window(wolf->mlx, WIDTH, HEIGHT, "Wolf3D");
-	wolf->img_ptr = mlx_new_image(wolf->mlx, WIDTH, HEIGHT);
-	wolf->data_adr = mlx_get_data_addr(wolf->img_ptr,
-			&wolf->bits_adr, &wolf->size_adr, &wolf->endian);
+	init_image(wolf->mlx, &wolf->img, WIDTH, HEIGHT);
+	init_image_in_file_xpm(wolf->mlx, &wolf->wall, SQUARE, PATH);
 }
 
 t_point	ft_draw_line_source(t_point *delta,
@@ -47,11 +68,19 @@ void	put_pixel_adr(t_wolf *wolf, t_point point)
 
 	if (point.x >= WIDTH || point.y >= HEIGHT || point.x <= 0 || point.y <= 0)
 		return ;
-	i = (point.x * wolf->bits_adr / 8) + (point.y * wolf->size_adr);
-	wolf->data_adr[i] = point.color;
-	wolf->data_adr[++i] = point.color >> 8;
-	wolf->data_adr[++i] = point.color >> 16;
-	wolf->data_adr[++i] = 0;
+	i = (point.x * wolf->img.bits_adr / 8) + (point.y * wolf->img.size_adr);
+	//wolf->img.data_adr[i] = point.color;
+	//ft_printf("color [%#x]\n", point.color);
+	//strncpy(&wolf->img.data_adr[i], (const char*)&point.color, 4);
+	wolf->img.data_adr[i] = point.color >> 24;
+	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
+	wolf->img.data_adr[++i] = point.color >> 16;
+	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
+	wolf->img.data_adr[++i] = point.color >> 8;
+	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
+	wolf->img.data_adr[++i] = 0;
+	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
+	//exit(0);
 }
 
 void	ft_draw_line(t_wolf *wolf, t_point point1, t_point point2, int color)
@@ -150,21 +179,71 @@ void	read_map(t_wolf *wolf, char *name)
 	//exit(0);
 }
 
-
-void	drow_vertical_line(t_wolf *wolf, int x, double h, double angle)
+void	print_data_adr(char *data_adr)
 {
-	double		j;
-	int		i;
+	int i;
+
+	i = -1;
+	while(++i < 64 * 10)
+		ft_printf("c = [%#x] i = [%d]\n",data_adr[i], i);
+}
+int		get_color_point(t_ray *ray, char *data_adr, int num_pix)
+{
+	int		color;
+	int		x_o;
+	int		y_o;
+	int		iter;
+	double	scale;
+
+	scale = SQUARE / (ray->distance);
+	//scale = ray->distance / (SQUARE);
+	//ft_printf("scale [%f]\n", scale);
+	//exit(0);
+	//scale = 0.3;
+	if (ray->ver)
+		x_o = (int)ray->y_wall & (SQUARE - 1);
+	else
+		x_o = (int)ray->x_wall & (SQUARE - 1);
+	//x_o = ray->y_squre;
+	y_o = (int)(num_pix * scale);
+	iter = y_o * SQUARE * 4 + x_o * 4;
+	//ft_printf("num_pix {%d} x_o = [%d] y_o = [%d]\n", num_pix,x_o, y_o);
+	//ft_printf("x_o = [%d] y = [%d] iter = {%d}\n", x_o, y_o, iter);
+	//exit(0);
+	//ft_printf("color [%#x]\n", color);
+	//iter--;
+	//iter = 0;
+	color = data_adr[iter];	
+	//ft_printf("color [%#x]\n", color);
+	color = color << 8;
+	//ft_printf("color [%#x]\n", color);
+	color = color | (data_adr[++iter] & 0xff);	
+	//ft_printf("color [%#x]\n", color);
+	color = color << 8;
+	//ft_printf("color [%#x]\n", color);
+	color = color | (data_adr[++iter] & 0xff);	
+	//ft_printf("color [%#x]\n", color);
+	color = color << 8;
+	//ft_printf("color [%#x]\n", color);
+	//print_data_adr(data_adr);
+	//exit(0);
+	return (color);	
+	//return (0x37373700);	
+}
+
+void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray)
+{
+	double	j;
+	int		num_pix;
 	t_point point;
 	
-	j = (HEIGHT / 2.0) - (h / 2.0);
-	if (angle < 0)
-		point.color = 0xFF;
-	else
-		point.color = 0xFFFF;
+	num_pix = -1;
+	j = (HEIGHT / 2.0) - (ray->distance / 2.0);
+	point.color = 0xFFFF;
 	point.x = x;
-	while (++j < (HEIGHT / 2.0) + (h / 2.0))
+	while (++j < (HEIGHT / 2.0) + (ray->distance / 2.0))
 	{
+		point.color = get_color_point(ray, wolf->wall.data_adr, ++num_pix);
 		point.y = j;
 		put_pixel_adr(wolf, point);
 	}
@@ -208,70 +287,76 @@ int		check_wall_gor(t_wolf *wolf, int x_gl, int y_gl)
 	return (0);
 }
 
-double		get_len_ray_gor(t_wolf *wolf, double k, double b, double angle)
+t_ray		get_len_ray_gor(t_wolf *wolf, double k, double b, double angle)
 {
-	t_point	gor;
+	t_ray	gor;
 	int		tmp;
 
 	if ((angle > 0 && angle < 180) || (angle < -180 && angle > -360) || angle > 360)
 	{
 		tmp = SQUARE;
-		gor.y = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE + SQUARE;
+		gor.y_wall = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE + SQUARE;
 	}
 	else
 	{
 		tmp = (-1) * SQUARE;
-		gor.y = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE;// + SQUARE;
+		gor.y_wall = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE;// + SQUARE;
 	}
 	while (1)
 	{
-		gor.x = (gor.y - wolf->pl.y_pl) / k + wolf->pl.x_pl;
+		gor.x_wall = (gor.y_wall - wolf->pl.y_pl) / k + wolf->pl.x_pl;
 		//ft_printf("gor.x = [%d] gor.y = {%d}\n", gor.x, gor.y);
-		if (check_wall_gor(wolf, gor.x, gor.y))
+		if (check_wall_gor(wolf, gor.x_wall, gor.y_wall))
 			break ;
-		gor.y += tmp;
+		gor.y_wall += tmp;
 	}
 	//ft_printf("gor.x = [%d] gor.y = {%d}\n", gor.x, gor.y);
-	return (sqrt(pow(gor.x - wolf->pl.x_pl, 2) + pow(gor.y - wolf->pl.y_pl, 2)));
+	gor.ver = 0;
+	gor.x_squre = (int)gor.x_wall & (SQUARE - 1);
+	gor.distance = sqrt(pow(gor.x_wall - wolf->pl.x_pl, 2) + pow(gor.y_wall - wolf->pl.y_pl, 2));
+	return (gor);
 }
 
-double		get_len_ray_ver(t_wolf *wolf, double k, double b, double angle)
+t_ray		get_len_ray_ver(t_wolf *wolf, double k, double b, double angle)
 {
-	t_point	ver;
+	t_ray	ver;
 	int		tmp;
 
 	if ((angle > -90 && angle < 90) || (angle > 270) || (angle < -270))
 	{
 		tmp = SQUARE;
-		ver.x = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE + SQUARE;
+		ver.x_wall = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE + SQUARE;
 	}
 	else
 	{
 		tmp = (-1) * SQUARE;
-		ver.x = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE;// + SQUARE;
+		ver.x_wall = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE;// + SQUARE;
 	}
 	while (1)
 	{
-		ver.y = wolf->pl.y_pl + k * (ver.x - wolf->pl.x_pl);
-		if (check_wall_vert(wolf, ver.x, ver.y))
+		ver.y_wall = wolf->pl.y_pl + k * (ver.x_wall - wolf->pl.x_pl);
+		if (check_wall_vert(wolf, ver.x_wall, ver.y_wall))
 			break ;
-		ver.x += tmp;//SQUARE;
+		ver.x_wall += tmp;//SQUARE;
 	}
 	//ft_printf("ver.x = [%d] ver.y = {%d}\n", ver.x, ver.y);
-	ft_printf("ver.y = [%d] \n",ver.y & 0x1f);
-	return (sqrt(pow(ver.x - wolf->pl.x_pl, 2) + pow(ver.y - wolf->pl.y_pl, 2)));
+	//ft_printf("ver.y = [%d] \n",ver.y & 0x1f);
+	ver.ver = 1;
+	ver.distance = sqrt(pow(ver.x_wall - wolf->pl.x_pl, 2) + pow(ver.y_wall - wolf->pl.y_pl, 2));
+	return (ver);
 }
 
-double		get_wall_height(t_wolf *wolf, double angle)
+t_ray		get_wall_height(t_wolf *wolf, double angle)
 {
-	double	k;	
+	double	k;
 	double	b;
-	double	h_v;
-	double	h_g;
+	t_ray	r_v;
+	t_ray	r_g;
 
 	//if (angle > 90)
 	//	angle = -1 * (180 - angle);
 	k = tan(angle*M_PI/180);
+	b = wolf->pl.y_pl - k * wolf->pl.x_pl;
 	if (k == 0)
 		return (get_len_ray_ver(wolf, k, b, angle));
 	//k = tan(angle);
@@ -279,29 +364,28 @@ double		get_wall_height(t_wolf *wolf, double angle)
 	//	k = k * (-1);
 	//k = tan(15.9454*M_PI/180);
 	//k = tan(0*M_PI/180);
-	b = wolf->pl.y_pl - k * wolf->pl.x_pl;
-	h_v = get_len_ray_ver(wolf, k, b, angle);
-	h_g = get_len_ray_gor(wolf, k, b, angle);
+	r_v = get_len_ray_ver(wolf, k, b, angle);
+	r_g = get_len_ray_gor(wolf, k, b, angle);
 	//ft_printf("h_v = [%d] h_g = {%d}\n", h_v, h_g);
-	return ((h_v < h_g) ? h_v : h_g);
+	return ((r_v.distance < r_g.distance) ? r_v : r_g);
 	//ft_printf("tan(-30) = {%f}\n", tan(330*M_PI/180));
 }
 
-void	clear_image(t_wolf *wolf)
+void	clear_image(t_image *img_ptr)
 {
 	char	*temp;
 	int		i;
 
-	temp = wolf->data_adr;
+	temp = img_ptr->data_adr;
 	i = -1;
-	while (++i < WIDTH * 4 * HEIGHT)
+	while (++i < img_ptr->wid * 4 * img_ptr->hei)
 		temp[i] = 0;
 }
 
 void	press_enter(t_wolf *wolf)
 {
 	int		i;
-	long double	h;
+	t_ray	ray;
 	int		z;
 	double	angle;
 	double	H;
@@ -313,24 +397,23 @@ void	press_enter(t_wolf *wolf)
 	while (++i < WIDTH)
 	{
 		//ft_printf("cos(delta) {%f}\n", cos(delta*M_PI/180));
-		h = get_wall_height(wolf, angle);
+		ray = get_wall_height(wolf, angle);
 		//ft_printf("h = {%f}\n", h);
 		//h = h * cos(delta*M_PI/180);
-		h = h * wolf->cos_arr[i];
+		ray.distance = ray.distance * wolf->cos_arr[i];
 		//h = fabs(h);
 		//ft_printf("h = {%d}\n", h);
 		//if (h == 0)
 		//	h = 1;
-		H = SQUARE * 928.0 / h;
-		//ft_printf("H {%f}\n", H);
-		//H = SQUARE * 100 / h ;
-		//drow_vertical_line(wolf, i, h, angle);
-		//H = ceil(H);
-		drow_vertical_line(wolf, i, H, angle);
+		ray.distance = SQUARE * 928.0 / ray.distance;
+		ft_printf("distance = {%Lf}\n", ray.distance);
+		drow_vertical_line(wolf, i, &ray);
 		angle += wolf->delta_wid;
 	}
-	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_ptr,0 ,0);
-	clear_image(wolf);
+	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr,0 ,0);
+	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->wall.img_ptr, 0 ,0);
+//	clear_image(&wolf->wall);
+	clear_image(&wolf->img);
 }
 
 void	press_left(t_wolf *wolf)
