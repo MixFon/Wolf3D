@@ -206,7 +206,7 @@ int		get_color_point(t_ray *ray, char *data_adr, int num_pix)
 		x_o = (int)ray->x_wall & (SQUARE - 1);
 	//x_o = ray->y_squre;
 	y_o = (int)(num_pix * scale);
-	iter = y_o * SQUARE * 4 + x_o * 4;
+	iter = 4 * (y_o * SQUARE + x_o);
 	//ft_printf("num_pix {%d} x_o = [%d] y_o = [%d]\n", num_pix,x_o, y_o);
 	//ft_printf("x_o = [%d] y = [%d] iter = {%d}\n", x_o, y_o, iter);
 	//exit(0);
@@ -239,7 +239,7 @@ void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray)
 	
 	num_pix = -1;
 	j = (HEIGHT / 2.0) - (ray->distance / 2.0);
-	point.color = 0xFFFF;
+	//point.color = 0xFFFF;
 	point.x = x;
 	while (++j < (HEIGHT / 2.0) + (ray->distance / 2.0))
 	{
@@ -406,7 +406,7 @@ void	press_enter(t_wolf *wolf)
 		//if (h == 0)
 		//	h = 1;
 		ray.distance = SQUARE * 928.0 / ray.distance;
-		ft_printf("distance = {%Lf}\n", ray.distance);
+		//ft_printf("distance = {%Lf}\n", ray.distance);
 		drow_vertical_line(wolf, i, &ray);
 		angle += wolf->delta_wid;
 	}
@@ -432,18 +432,43 @@ void	press_right(t_wolf *wolf)
 
 void	press_up(t_wolf *wolf)
 {
-	wolf->pl.x_pl += STEP * cos(wolf->pl.pov*M_PI/180);
-	wolf->pl.y_pl += STEP * sin(wolf->pl.pov*M_PI/180);
-	ft_printf("angle [%f]\n", wolf->pl.pov);
-	ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
+	double dx;
+	double dy;
+	int		x;
+	int		y;
+
+	dx = STEP * cos(wolf->pl.pov*M_PI/180);
+	dy = STEP * sin(wolf->pl.pov*M_PI/180);
+	x = (dx * 10 + wolf->pl.x_pl) / SQUARE;
+	y = (dy * 10 + wolf->pl.y_pl) / SQUARE;
+	ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
+	if (wolf->map[y][x] == 0)
+	{
+		wolf->pl.x_pl += dx;
+		wolf->pl.y_pl += dy;
+	}
+	//ft_printf("angle [%f]\n", wolf->pl.pov);
+	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
 }
 
 void	press_down(t_wolf *wolf)
 {
-	wolf->pl.x_pl -= STEP * cos(wolf->pl.pov*M_PI/180);
-	wolf->pl.y_pl -= STEP * sin(wolf->pl.pov*M_PI/180);
-	ft_printf("angle [%f]\n", wolf->pl.pov);
+	double dx;
+	double dy;
+	int		x;
+	int		y;
+
+	dx = STEP * cos(wolf->pl.pov*M_PI/180);
+	dy = STEP * sin(wolf->pl.pov*M_PI/180);
+	x = (wolf->pl.x_pl - dx) / SQUARE;
+	y = (wolf->pl.y_pl - dy) / SQUARE;
+	ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
+	if (wolf->map[y][x] == 0)
+	{
+		wolf->pl.x_pl -= dx;
+		wolf->pl.y_pl -= dy;
+	}
 	ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
 }

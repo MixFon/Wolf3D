@@ -22,7 +22,7 @@
 # define K_RIGHT	124
 # define K_DOWN		125
 
-# define PATH		"/Users/widraugr/MyFile/File42/Wolf3D/texture/WALL26.xpm"
+# define PATH		"./texture/WALL26.xpm"
 
 typedef struct		s_ray
 {
