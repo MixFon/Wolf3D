@@ -21,6 +21,8 @@
 # define K_UP			126
 # define K_RIGHT		124
 # define K_DOWN			125
+# define K_Z			6
+# define K_X			7
 
 # define COUNT_WALLS	10
 

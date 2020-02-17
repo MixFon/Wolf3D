@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/17 16:59:15 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/17 17:53:16 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void	init(t_wolf *wolf)
 	wolf->pl.fov = 60.0;
 	wolf->cos_arr = NULL;
 	wolf->delta_wid = 0.0;
-	wolf->view_len = 2.0 * SQUARE;
+	wolf->view_len = 2.0;
 	wolf->half_hei = HEIGHT / 2;
 	wolf->for_squre = SQUARE * 928;
 	//	wolf->delta_fov = 0.0;
@@ -260,7 +260,7 @@ int		add_shadow(t_wolf *wolf, int color, double H)
 	int new_color;
 	double dif;
 
-	dif = 3.5;
+	dif = wolf->view_len + 1.5;
 	if (H > SQUARE * dif && H < SQUARE * (dif + 0.1))
 		color = (color >> 1) & 0x7F7F7F;	
 	else if (H > SQUARE * (dif + 0.1) && H < SQUARE * (dif + 0.2))
@@ -475,7 +475,7 @@ int		press_enter(t_wolf *wolf)
 		//h = h * cos(delta*M_PI/180);
 		H = ray.distance;
 		ray.distance = ray.distance * wolf->cos_arr[i];
-		if (H > wolf->view_len * 2)
+		if (H > wolf->view_len * SQUARE * 2)
 		{
 			angle += wolf->delta_wid;
 			continue;
@@ -492,7 +492,7 @@ int		press_enter(t_wolf *wolf)
 		angle += wolf->delta_wid;
 	}
 	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr,0 ,0);
-	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->walls[0].img_ptr, 0 ,0);
+	//mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->walls[0].img_ptr, 0 ,0);
 //	clear_image(&wolf->wall);
 	clear_image(&wolf->img);
 	return (0);
@@ -502,14 +502,14 @@ void	press_left(t_wolf *wolf)
 {
 	wolf->pl.pov -= 4;
 	wolf->pl.pov = wolf->pl.pov % 360;
-	//press_enter(wolf); 
+	press_enter(wolf); 
 }
 
 void	press_right(t_wolf *wolf)
 {
 	wolf->pl.pov += 4;
 	wolf->pl.pov = wolf->pl.pov % 360;
-	//press_enter(wolf); 
+	press_enter(wolf); 
 }
 
 void	press_up(t_wolf *wolf)
@@ -531,7 +531,7 @@ void	press_up(t_wolf *wolf)
 	}
 	//ft_printf("angle [%f]\n", wolf->pl.pov);
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
-	//press_enter(wolf); 
+	press_enter(wolf); 
 }
 
 void	press_down(t_wolf *wolf)
@@ -552,7 +552,7 @@ void	press_down(t_wolf *wolf)
 		wolf->pl.y_pl -= dy;
 	}
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
-	//press_enter(wolf); 
+	press_enter(wolf); 
 }
 
 int		move_mouse(int x, int y, t_wolf *wolf)
@@ -585,18 +585,22 @@ int		move_camera(int key, t_wolf *wolf)
 	return (0);
 }
 
-int		press_mouse(int button, int x, int y, t_wolf *wolf)
-{
-	ft_printf("button = {%d} x = [%d] y = {%d}\n", button, x, y);
-	if (x > 1 && x < 21 && y > -2 && y < -21)
-		sys_err("Normal exit.\n");
-	return (0);
-}
-
 int		close_windows(void)
 {
 	sys_err("Normal exit.\n");
 	return (0);
+}
+
+void	increase_scale(t_wolf *wolf)
+{
+	wolf->view_len += 0.1;
+	press_enter(wolf);
+}
+
+void	reduce_scale(t_wolf *wolf)
+{
+	wolf->view_len -= 0.1;
+	press_enter(wolf);
 }
 
 int		press_key(int key, t_wolf *wolf)
@@ -604,6 +608,10 @@ int		press_key(int key, t_wolf *wolf)
 	ft_printf("key = {%d}\n", key);
 	if (key == K_ESC)
 		sys_err("Normal exit.\n");
+	if (key == K_Z)
+		increase_scale(wolf);
+	if (key == K_X)
+		reduce_scale(wolf);
 	return (0);
 }
 
@@ -636,8 +644,8 @@ int		main(int ac, char **av)
 	read_map(&wolf, av[1]);
 	calculate_tan_cos(&wolf);
 	mlx_key_hook(wolf.window, press_key, &wolf);
-	mlx_loop_hook(wolf.mlx, press_enter, &wolf);
-	mlx_mouse_hook(wolf.window, press_mouse, &wolf);
+	//mlx_loop_hook(wolf.mlx, press_enter, &wolf);
+//	mlx_mouse_hook(wolf.window, press_mouse, &wolf);
 	//mlx_hook(wolf.window, 3, 0xfffff, move_camera, &wolf);
 	mlx_hook(wolf.window, 2, 0xfffff, move_camera, &wolf);
 	mlx_hook(wolf.window, 6, 0xfffff, move_mouse, &wolf);
