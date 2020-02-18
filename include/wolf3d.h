@@ -4,6 +4,7 @@
 # include "../libft/libft.h"
 # include "../minilibx_macos/mlx.h"
 # include "math.h"
+# include "time.h"
 
 # define WIDTH			1024
 # define HEIGHT			720

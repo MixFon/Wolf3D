@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/17 18:19:50 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/18 11:59:42 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,8 +59,8 @@ void	init_image_walls_texture(t_wolf *wolf)
 
 void	init(t_wolf *wolf)
 {
-	wolf->pl.x_pl = 224;
-	wolf->pl.y_pl = 224;
+	wolf->pl.x_pl = 96;
+	wolf->pl.y_pl = 96;
 	wolf->pl.pov = 0;
 	wolf->pl.fov = 60.0;
 	wolf->cos_arr = NULL;
@@ -270,15 +270,51 @@ int		add_shadow(t_wolf *wolf, int color, double H)
 	else if (H > SQUARE * (dif + 0.4) && H < SQUARE * (dif + 0.6))
 		color = (color >> 1) & 0x4F4F4F;
 	else if (H > SQUARE * (dif + 0.6) && H < SQUARE * (dif + 0.8))
-		color = (color >> 1) & 0x3F3F3F;
+		color = (color >> 1) & 0x4F4F4F;
 	else if (H > SQUARE * (dif + 0.8) && H < SQUARE * (dif + 1.0))
-		color = (color >> 1) & 0x2F2F2F;
-	else if (H > SQUARE * (dif + 1.1) && H < SQUARE * (dif + 1.2))
+		color = (color >> 2) & 0x3F3F3F;
+	else if (H > SQUARE * (dif + 1.0) && H < SQUARE * (dif + 1.2))
+		color = (color >> 2) & 0x2F2F2F;
+	else if (H > SQUARE * (dif + 1.2) && H < SQUARE * (dif + 1.4))
 		color = (color >> 1) & 0x1F1F1F;
-	else if (H > SQUARE * (dif + 1.2) && H < SQUARE * (dif + 1.3))
-		color = (color >> 1) & 0x0F0F0F;
+	else if (H > SQUARE * (dif + 1.4))
+		color = 0x0;
 	return (color);
 }
+
+/*
+ * height_line высота столба линии вертикальной текстуры
+ * distance расстояние до этой текстуры.
+*/
+
+void	print_floor(t_wolf *wolf, int x, int height_line, int distance)
+{
+	double angle;
+	double da;
+	double path;
+	t_point point;
+	int		j;
+
+	angle = atan((distance * 2) / SQUARE);
+	//angle = 1.5708 - angle;
+	path = (HEIGHT - height_line) / 2;
+	da = angle / path;
+	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
+	j = HEIGHT - path;
+	point.x = x;
+	while (++j < HEIGHT)
+	{
+		point.color = 0x373737;
+		point.color = add_shadow(wolf, point.color, SQUARE / (1.5 * cos(angle)));
+		//point.color = add_shadow(wolf, point.color, wolf->half_hei / cos(angle));
+		//ft_printf("H [%f]\n", height_line / 2 / cos(angle));
+		//point.color = add_shadow(wolf, point.color, distance);
+		point.y = j;
+		put_pixel_adr(wolf, point);
+		angle -= da;
+	}
+}
+
 void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray, double H)
 {
 	double	j;
@@ -305,6 +341,7 @@ void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray, double H)
 		point.y = j;
 		put_pixel_adr(wolf, point);
 	}
+	print_floor(wolf, x, ray->distance, H);
 }
 
 int		check_wall_vert(t_wolf *wolf, t_ray *ray) //int x_gl, int y_gl)
@@ -467,6 +504,7 @@ int		press_enter(t_wolf *wolf)
 	i = -1;
 	angle = wolf->pl.pov - wolf->pl.fov / 2; //Определяем начальный угол отрисовки.
 	//angle = wolf->pl.angle + M_PI / 6;
+	//print_floor(wolf);
 	while (++i < WIDTH)
 	{
 		//ft_printf("cos(delta) {%f}\n", cos(delta*M_PI/180));
@@ -475,11 +513,13 @@ int		press_enter(t_wolf *wolf)
 		//h = h * cos(delta*M_PI/180);
 		H = ray.distance;
 		ray.distance = ray.distance * wolf->cos_arr[i];
+		/*
 		if (H > wolf->view_len * SQUARE * 2)
 		{
 			angle += wolf->delta_wid;
 			continue;
 		}
+		*/
 		//h = fabs(h);
 		//ft_printf("h = {%d}\n", h);
 		//if (h == 0)
@@ -634,6 +674,21 @@ void	calculate_tan_cos(t_wolf *wolf)
 	}
 }
 
+int		check_time(t_wolf *wolf)
+{
+	static clock_t start_clock = 0;
+	clock_t cur_clock;
+
+	cur_clock = clock() / CLOCKS_PER_SEC;
+	if (cur_clock - start_clock > 1)
+	{
+		start_clock = cur_clock;
+		reduce_scale(wolf);
+	}
+	//ft_printf("Time = [%d]\n", start_clock);
+	return (0);
+}
+
 int		main(int ac, char **av)
 {
 	t_wolf wolf;
@@ -644,7 +699,7 @@ int		main(int ac, char **av)
 	read_map(&wolf, av[1]);
 	calculate_tan_cos(&wolf);
 	mlx_key_hook(wolf.window, press_key, &wolf);
-	//mlx_loop_hook(wolf.mlx, press_enter, &wolf);
+	mlx_loop_hook(wolf.mlx, check_time, &wolf);
 //	mlx_mouse_hook(wolf.window, press_mouse, &wolf);
 	//mlx_hook(wolf.window, 3, 0xfffff, move_camera, &wolf);
 	mlx_hook(wolf.window, 2, 0xfffff, move_camera, &wolf);
