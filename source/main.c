@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/18 11:59:42 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/18 14:18:57 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,17 +287,19 @@ int		add_shadow(t_wolf *wolf, int color, double H)
  * distance расстояние до этой текстуры.
 */
 
-void	print_floor(t_wolf *wolf, int x, int height_line, int distance)
+void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 {
-	double angle;
-	double da;
-	double path;
-	t_point point;
-	int		j;
+	long double	angle;
+	long double da;
+	double		path;
+	t_point		point;
+	int			j;
 
-	angle = atan((distance * 2) / SQUARE);
+	angle = atan((distance * 2.0) / SQUARE);
+	//angle = 1.5708;
+	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
 	//angle = 1.5708 - angle;
-	path = (HEIGHT - height_line) / 2;
+	path = (HEIGHT - height_line) / 2.0;
 	da = angle / path;
 	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
 	j = HEIGHT - path;
@@ -305,7 +307,7 @@ void	print_floor(t_wolf *wolf, int x, int height_line, int distance)
 	while (++j < HEIGHT)
 	{
 		point.color = 0x373737;
-		point.color = add_shadow(wolf, point.color, SQUARE / (1.5 * cos(angle)));
+		point.color = add_shadow(wolf, point.color, SQUARE / (2.0 * cos(angle)));
 		//point.color = add_shadow(wolf, point.color, wolf->half_hei / cos(angle));
 		//ft_printf("H [%f]\n", height_line / 2 / cos(angle));
 		//point.color = add_shadow(wolf, point.color, distance);
@@ -540,14 +542,14 @@ int		press_enter(t_wolf *wolf)
 
 void	press_left(t_wolf *wolf)
 {
-	wolf->pl.pov -= 4;
+	wolf->pl.pov -= ANGLE;
 	wolf->pl.pov = wolf->pl.pov % 360;
 	press_enter(wolf); 
 }
 
 void	press_right(t_wolf *wolf)
 {
-	wolf->pl.pov += 4;
+	wolf->pl.pov += ANGLE;
 	wolf->pl.pov = wolf->pl.pov % 360;
 	press_enter(wolf); 
 }

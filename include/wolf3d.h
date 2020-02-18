@@ -16,6 +16,8 @@
 
 # define STEP			4
 
+# define ANGLE			2
+
 # define K_ENTER		36
 # define K_ESC			53
 # define K_LEFT			123
