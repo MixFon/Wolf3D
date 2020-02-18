@@ -6,7 +6,7 @@
 #    By: widraugr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2018/11/29 13:07:44 by widraugr          #+#    #+#              #
-#    Updated: 2019/12/06 10:10:28 by widraugr         ###   ########.fr        #
+#    Updated: 2020/02/18 14:53:30 by widraugr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,8 @@ LIBDIR = ./libft
 
 MLXDIR = minilibx_macos
 
-FILE_C = main.c
+FILE_C = main.c\
+		 parser.c
 		#init.c\
 		#mandelbrot.c\
 		#nephroida.c\

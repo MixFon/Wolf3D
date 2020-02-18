@@ -82,6 +82,9 @@ typedef struct		s_wolf
 	double			view_len;	//Как далеко прорисовывается окружение.
 	double			half_hei;	//Половина высоты, для разгрузки вычислений.
 	double			for_squre;	//Коэфициент для того чтобы колонки стали квадратными.
+	int				width;
+	int				height;
+	int				side;
 	s_player		pl;
 	t_image			img;
 	t_image			walls[10];
@@ -94,5 +97,6 @@ typedef struct		s_point
 	int				color;
 }					t_point;
 
-void	clear_image(t_image *img_ptr);
+void		clear_image(t_image *img_ptr);
+void		parser(t_wolf *wolf, char *name);
 #endif

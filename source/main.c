@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/18 14:18:57 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/18 16:25:38 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,9 +59,10 @@ void	init_image_walls_texture(t_wolf *wolf)
 
 void	init(t_wolf *wolf)
 {
-	wolf->pl.x_pl = 96;
-	wolf->pl.y_pl = 96;
-	wolf->pl.pov = 0;
+	wolf->pl.x_pl = 160;
+	wolf->pl.y_pl = 160;
+	wolf->pl.pov = 90;
+	wolf->side = 1;
 	wolf->pl.fov = 60.0;
 	wolf->cos_arr = NULL;
 	wolf->delta_wid = 0.0;
@@ -73,16 +74,6 @@ void	init(t_wolf *wolf)
 	wolf->window = mlx_new_window(wolf->mlx, WIDTH, HEIGHT, "Wolf3D");
 	init_image(wolf->mlx, &wolf->img, WIDTH, HEIGHT);
 	init_image_walls_texture(wolf);
-}
-
-t_point	ft_draw_line_source(t_point *delta,
-		t_point *sign, t_point point1, t_point point2)
-{
-	(*delta).x = abs((point2.x - point1.x));
-	(*delta).y = abs((point2.y - point1.y));
-	(*sign).x = (point1.x < point2.x) ? 1 : -1;
-	(*sign).y = (point1.y < point2.y) ? 1 : -1;
-	return (point1);
 }
 
 void	put_pixel_adr(t_wolf *wolf, t_point point)
@@ -106,35 +97,6 @@ void	put_pixel_adr(t_wolf *wolf, t_point point)
 	//exit(0);
 }
 
-void	ft_draw_line(t_wolf *wolf, t_point point1, t_point point2, int color)
-{
-	t_point	delta;
-	t_point	sign;
-	t_point	point;
-	int		error;
-	int		error2;
-
-	point = ft_draw_line_source(&delta, &sign, point1, point2);
-	error = delta.x - delta.y;
-	put_pixel_adr(wolf, point2);
-	while (point.x != point2.x || point.y != point2.y)
-	{
-		put_pixel_adr(wolf, point);
-		error2 = error * 2;
-		if (error2 > -delta.y)
-		{
-			error -= delta.y;
-			point.x += sign.x;
-		}
-		if (error2 < delta.x)
-		{
-			error += delta.x;
-			point.y += sign.y;
-		}
-		point.color = color;
-	}
-}
-
 void	infill_int_map(int *iarr, char **carr)
 {
 	int i;
@@ -153,17 +115,17 @@ void	infill_int_map(int *iarr, char **carr)
 	//ft_putchar('\n');
 }
 
-void	print_int_arr(int **map)
+void	print_int_arr(t_wolf *wolf)
 {
 	int i;
 	int j;
 
 	i = -1;
-	while (++i < 7)
+	while (++i < wolf->height)
 	{
 		j = -1;
-		while (++j < 7)
-			ft_printf("%d ", map[i][j]);
+		while (++j < wolf->width)
+			ft_printf("%d ", wolf->map[i][j]);
 		ft_putchar('\n');
 	}
 }
@@ -198,7 +160,7 @@ void	read_map(t_wolf *wolf, char *name)
 		infill_int_map(wolf->map[i], arr);
 		ft_strdel(&line);
 	}
-	print_int_arr(wolf->map);
+	//print_int_arr(wolf->map);
 	//exit(0);
 }
 
@@ -207,9 +169,10 @@ void	print_data_adr(char *data_adr)
 	int i;
 
 	i = -1;
-	while(++i < 64 * 10)
+	while(++i < SQUARE * 10)
 		ft_printf("c = [%#x] i = [%d]\n",data_adr[i], i);
 }
+
 int		get_color_point(t_ray *ray, char *data_adr, int num_pix, double H)
 {
 	int		color;
@@ -292,6 +255,7 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 	long double	angle;
 	long double da;
 	double		path;
+	double		dx;
 	t_point		point;
 	int			j;
 
@@ -307,7 +271,10 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 	while (++j < HEIGHT)
 	{
 		point.color = 0x373737;
-		point.color = add_shadow(wolf, point.color, SQUARE / (2.0 * cos(angle)));
+		dx = tan(angle) * SQUARE / 2;
+		ft_printf("dx [%f]\n", dx);
+		//point.color = add_shadow(wolf, point.color, SQUARE / (2.0 * cos(angle)));
+		point.color = add_shadow(wolf, point.color, dx);
 		//point.color = add_shadow(wolf, point.color, wolf->half_hei / cos(angle));
 		//ft_printf("H [%f]\n", height_line / 2 / cos(angle));
 		//point.color = add_shadow(wolf, point.color, distance);
@@ -354,7 +321,7 @@ int		check_wall_vert(t_wolf *wolf, t_ray *ray) //int x_gl, int y_gl)
 	x = ray->x_wall / SQUARE;
 	y = ray->y_wall / SQUARE;
 	//ray->number_wall = 0;
-	if (x < 0 || y < 0 || y > 6 || x > 6)
+	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
 	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
 	if (wolf->map[y][x] != 0)
@@ -379,7 +346,7 @@ int		check_wall_gor(t_wolf *wolf, t_ray *ray)//int x_gl, int y_gl)
 	y = ray->y_wall / SQUARE;
 	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
 	//ray->number_wall = 0;
-	if (x < 0 || y < 0 || y > 6 || x > 6)
+	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
 	if (wolf->map[y][x] != 0)
 	{
@@ -698,7 +665,10 @@ int		main(int ac, char **av)
 	if (ac != 2)
 		sys_err("Two arguments.\n");
 	init(&wolf);
-	read_map(&wolf, av[1]);
+	//read_map(&wolf, av[1]);
+	parser(&wolf, av[1]);
+//	print_int_arr(&wolf);
+//	exit(0);
 	calculate_tan_cos(&wolf);
 	mlx_key_hook(wolf.window, press_key, &wolf);
 	mlx_loop_hook(wolf.mlx, check_time, &wolf);
