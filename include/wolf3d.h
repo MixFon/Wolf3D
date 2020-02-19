@@ -26,6 +26,7 @@
 # define K_DOWN			125
 # define K_Z			6
 # define K_X			7
+# define K_C			8
 
 # define COUNT_WALLS	10
 
@@ -85,9 +86,10 @@ typedef struct		s_wolf
 	int				width;
 	int				height;
 	int				side;
-	int				pause : 2;
-	int				game_over : 2;
-	int				you_win : 2;
+	int				bl_pause : 2;
+	int				bl_game_over : 2;
+	int				bl_you_win : 2;
+	int				bl_compass : 2;
 	s_player		pl;
 	t_image			img;
 	t_image			img_start;

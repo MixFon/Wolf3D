@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/19 13:34:13 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/19 15:19:17 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,9 +76,10 @@ void	init(t_wolf *wolf)
 	wolf->pl.y_pl = 160;
 	wolf->pl.pov = 90;
 	wolf->side = 1;
-	wolf->pause = 1;
-	wolf->you_win = 0;
-	wolf->game_over = 0;
+	wolf->bl_pause = 1;
+	wolf->bl_you_win = 0;
+	wolf->bl_game_over = 0;
+	wolf->bl_compass = 0;
 	wolf->pl.fov = 60.0;
 	wolf->cos_arr = NULL;
 	wolf->delta_wid = 0.0;
@@ -335,14 +336,18 @@ int		check_wall_vert(t_wolf *wolf, t_ray *ray) //int x_gl, int y_gl)
 	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
 	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
-	if (wolf->map[y][x] != 0 && wolf->map[y][x] != 9)
+	if (wolf->map[y][x] != 0)
 	{
 		//ray->number_wall = wolf->map[y][x];
+		if (!wolf->bl_compass)
+			ray->number_wall = wolf->map[y][x];
 		return (1);
 	}
-	if (wolf->map[y][x - 1] != 0 && wolf->map[y][x - 1] != 9)
+	if (wolf->map[y][x - 1] != 0)
 	{
 		//ray->number_wall = wolf->map[y][x - 1];
+		if (!wolf->bl_compass)
+			ray->number_wall = wolf->map[y][x - 1];
 		return (1);
 	}
 	return (0);
@@ -359,14 +364,18 @@ int		check_wall_gor(t_wolf *wolf, t_ray *ray)//int x_gl, int y_gl)
 	//ray->number_wall = 0;
 	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
-	if (wolf->map[y][x] != 0 && wolf->map[y][x] != 9)
+	if (wolf->map[y][x] != 0)
 	{
 		//ray->number_wall = wolf->map[y][x];
+		if (!wolf->bl_compass)
+			ray->number_wall = wolf->map[y][x];
 		return (1);
 	}
-	if (wolf->map[y - 1][x] != 0 && wolf->map[y - 1][x] != 9)
+	if (wolf->map[y - 1][x] != 0)
 	{
 		//ray->number_wall = wolf->map[y - 1][x];
+		if (!wolf->bl_compass)
+			ray->number_wall = wolf->map[y - 1][x];
 		return (1);
 	}
 	return (0);
@@ -475,19 +484,19 @@ void	clear_image(t_image *img_ptr)
 
 int		check_pause_or_game_ever(t_wolf *wolf)
 {
-	if (wolf->pause)
-	{
-		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_start.img_ptr, 0 ,0);
-		return (1);
-	}
-	if (wolf->you_win)
+	if (wolf->bl_you_win)
 	{
 		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_you_win.img_ptr, 0 ,0);
 		return (1);
 	}
-	if (wolf->game_over)
+	if (wolf->bl_game_over)
 	{
 		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_game_over.img_ptr, 0 ,0);
+		return (1);
+	}
+	if (wolf->bl_pause)
+	{
+		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_start.img_ptr, 0 ,0);
 		return (1);
 	}
 	return (0);
@@ -554,6 +563,12 @@ void	press_right(t_wolf *wolf)
 	press_enter(wolf); 
 }
 
+void	find_fire(t_wolf *wolf, int x, int y)
+{
+	wolf->map[y][x] = 0;
+	wolf->view_len += 1;
+}
+
 void	press_up(t_wolf *wolf)
 {
 	double dx;
@@ -566,12 +581,14 @@ void	press_up(t_wolf *wolf)
 	x = (dx * 10 + wolf->pl.x_pl) / SQUARE;
 	y = (dy * 10 + wolf->pl.y_pl) / SQUARE;
 	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
-	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9)
+	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9 || wolf->map[y][x] == 8)
 	{
 		wolf->pl.x_pl += dx;
 		wolf->pl.y_pl += dy;
 		if (wolf->map[y][x] == 9)
-			wolf->you_win = 1;
+			wolf->bl_you_win = 1;
+		else if (wolf->map[y][x] == 8)
+			find_fire(wolf, x, y);
 	}
 	//ft_printf("angle [%f]\n", wolf->pl.pov);
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
@@ -590,12 +607,14 @@ void	press_down(t_wolf *wolf)
 	x = (wolf->pl.x_pl - dx * 10) / SQUARE;
 	y = (wolf->pl.y_pl - dy * 10) / SQUARE;
 	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
-	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9)
+	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9 || wolf->map[y][x] == 8)
 	{
 		wolf->pl.x_pl -= dx;
 		wolf->pl.y_pl -= dy;
 		if (wolf->map[y][x] == 9)
-			wolf->you_win = 1;
+			wolf->bl_you_win = 1;
+		else if (wolf->map[y][x] == 8)
+			find_fire(wolf, x, y);
 	}
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
@@ -620,13 +639,15 @@ int		move_mouse(int x, int y, t_wolf *wolf)
 
 int		move_camera(int key, t_wolf *wolf)
 {
+	if (wolf->bl_pause)
+		return (0);
 	if (key == K_UP)
 		press_up(wolf);
-	if (key == K_DOWN)
+	else if (key == K_DOWN)
 		press_down(wolf);
-	if (key == K_LEFT)
+	else if (key == K_LEFT)
 		press_left(wolf);
-	if (key == K_RIGHT)
+	else if (key == K_RIGHT)
 		press_right(wolf);
 	return (0);
 }
@@ -648,7 +669,7 @@ void	reduce_scale(t_wolf *wolf)
 	wolf->view_len -= 0.1;
 	ft_printf("view_len = [%f]\n", wolf->view_len);
 	if (wolf->view_len < 0)
-		wolf->game_over = 1;
+		wolf->bl_game_over = 1;
 }
 
 int		press_key(int key, t_wolf *wolf)
@@ -656,12 +677,18 @@ int		press_key(int key, t_wolf *wolf)
 	ft_printf("key = {%d}\n", key);
 	if (key == K_ESC)
 		sys_err("Normal exit.\n");
+	else if (key == K_ENTER)
+		wolf->bl_pause = !wolf->bl_pause;
+	else if (wolf->bl_pause)
+		return (0);
 	else if (key == K_Z)
 		increase_scale(wolf);
 	else if (key == K_X)
 		reduce_scale(wolf);
-	else if (key == K_ENTER)
-		wolf->pause = !wolf->pause;
+	else if (key == K_C)
+		wolf->bl_compass = !wolf->bl_compass;
+	else
+		return (0);
 	press_enter(wolf);
 	return (0);
 }
@@ -718,7 +745,7 @@ int		main(int ac, char **av)
 	mlx_loop_hook(wolf.mlx, check_time, &wolf);
 //	mlx_mouse_hook(wolf.window, press_mouse, &wolf);
 	//mlx_hook(wolf.window, 3, 0xfffff, move_camera, &wolf);
-	mlx_put_image_to_window(wolf.mlx, wolf.window, wolf.img_you_win.img_ptr, 0 ,0);
+	mlx_put_image_to_window(wolf.mlx, wolf.window, wolf.img_start.img_ptr, 0 ,0);
 	mlx_hook(wolf.window, 2, 0xfffff, move_camera, &wolf);
 	mlx_hook(wolf.window, 6, 0xfffff, move_mouse, &wolf);
 	mlx_hook(wolf.window, 17, 0xfffff, close_windows, NULL);
