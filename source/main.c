@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/18 16:25:38 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/19 10:46:25 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,7 +218,7 @@ int		get_color_point(t_ray *ray, char *data_adr, int num_pix, double H)
 	return (color);	
 }
 
-int		add_shadow(t_wolf *wolf, int color, double H)
+int		add_shadow(t_wolf *wolf, int color, long double H)
 {
 	int new_color;
 	double dif;
@@ -239,7 +239,7 @@ int		add_shadow(t_wolf *wolf, int color, double H)
 	else if (H > SQUARE * (dif + 1.0) && H < SQUARE * (dif + 1.2))
 		color = (color >> 2) & 0x2F2F2F;
 	else if (H > SQUARE * (dif + 1.2) && H < SQUARE * (dif + 1.4))
-		color = (color >> 1) & 0x1F1F1F;
+		color = (color >> 1) & 0x0F0F0F;
 	else if (H > SQUARE * (dif + 1.4))
 		color = 0x0;
 	return (color);
@@ -250,6 +250,7 @@ int		add_shadow(t_wolf *wolf, int color, double H)
  * distance расстояние до этой текстуры.
 */
 
+/*
 void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 {
 	long double	angle;
@@ -272,7 +273,7 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 	{
 		point.color = 0x373737;
 		dx = tan(angle) * SQUARE / 2;
-		ft_printf("dx [%f]\n", dx);
+		//ft_printf("dx [%f]\n", dx);
 		//point.color = add_shadow(wolf, point.color, SQUARE / (2.0 * cos(angle)));
 		point.color = add_shadow(wolf, point.color, dx);
 		//point.color = add_shadow(wolf, point.color, wolf->half_hei / cos(angle));
@@ -283,7 +284,40 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 		angle -= da;
 	}
 }
+*/
 
+void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
+{
+	long double iter;
+	long double angle;
+	long double	dx;
+	long double	g;
+	double		path;
+	t_point		point;
+	int			j;
+
+	//angle = 1.5708;
+	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
+	//angle = 1.5708 - angle;
+	path = (HEIGHT - height_line) / 2.0;
+	if (path < 0)
+		return ;
+	//dx = path / wolf->view_len * SQUARE * 10;
+	angle = atan((distance * 2.0) / SQUARE);
+	//ft_printf("HEIGHT = {%d} height_line = {%Lf}\n", HEIGHT, height_line);
+	//ft_printf("angle = {%Lf} path = {%f}\n", angle, path);
+	j = HEIGHT - path;
+	point.x = x;
+	while (++j < HEIGHT)
+	{
+		point.color = 0x373737;
+		g = path / sin(angle);
+		point.color = add_shadow(wolf, point.color, g - SQUARE);
+		point.y = j;
+		put_pixel_adr(wolf, point);
+		path--;
+	}
+}
 void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray, double H)
 {
 	double	j;
