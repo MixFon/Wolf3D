@@ -6,18 +6,31 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/19 10:46:25 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/19 13:34:13 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/wolf3d.h"
 
-void	init_image_in_file_xpm(void *mlx, t_image *img, int size_squere , char *path)
+void	init_image_in_squere_file_xpm(void *mlx, t_image *img, int size_squere , char *path)
 {
 	img->wid = size_squere;
 	img->hei = size_squere;
 	img->bits_adr = 4;
 	img->size_adr = size_squere;
+	img->endian = 0;
+	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx, path, &img->wid, &img->hei)))
+		sys_err("Error image back.\n");
+	img->data_adr = mlx_get_data_addr(img->img_ptr,
+			&img->bits_adr, &img->size_adr, &img->endian);
+}
+
+void	init_image_in_file_xpm(void *mlx, t_image *img, char *path)
+{
+	img->wid = WIDTH;
+	img->hei = HEIGHT;
+	img->bits_adr = 4;
+	img->size_adr = WIDTH;
 	img->endian = 0;
 	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx, path, &img->wid, &img->hei)))
 		sys_err("Error image back.\n");
@@ -50,7 +63,7 @@ void	init_image_walls_texture(t_wolf *wolf)
 	{
 		number = ft_itoa(i);
 		name_wall = ft_multi_strdup(3, WALLS, number, ".xpm"); 
-		init_image_in_file_xpm(wolf->mlx, &wolf->walls[i], SQUARE, name_wall);
+		init_image_in_squere_file_xpm(wolf->mlx, &wolf->walls[i], SQUARE, name_wall);
 		ft_printf("number = {%s}, name_wall = [%s]\n", number, name_wall);
 		ft_strdel(&number);
 		ft_strdel(&name_wall);
@@ -63,10 +76,13 @@ void	init(t_wolf *wolf)
 	wolf->pl.y_pl = 160;
 	wolf->pl.pov = 90;
 	wolf->side = 1;
+	wolf->pause = 1;
+	wolf->you_win = 0;
+	wolf->game_over = 0;
 	wolf->pl.fov = 60.0;
 	wolf->cos_arr = NULL;
 	wolf->delta_wid = 0.0;
-	wolf->view_len = 2.0;
+	wolf->view_len = 3.0;
 	wolf->half_hei = HEIGHT / 2;
 	wolf->for_squre = SQUARE * 928;
 	//	wolf->delta_fov = 0.0;
@@ -74,6 +90,9 @@ void	init(t_wolf *wolf)
 	wolf->window = mlx_new_window(wolf->mlx, WIDTH, HEIGHT, "Wolf3D");
 	init_image(wolf->mlx, &wolf->img, WIDTH, HEIGHT);
 	init_image_walls_texture(wolf);
+	init_image_in_file_xpm(wolf->mlx, &wolf->img_start, "./texture/Start.xpm");
+	init_image_in_file_xpm(wolf->mlx, &wolf->img_game_over, "./texture/Game_over.xpm");
+	init_image_in_file_xpm(wolf->mlx, &wolf->img_you_win, "./texture/you_win.xpm");
 }
 
 void	put_pixel_adr(t_wolf *wolf, t_point point)
@@ -223,7 +242,7 @@ int		add_shadow(t_wolf *wolf, int color, long double H)
 	int new_color;
 	double dif;
 
-	dif = wolf->view_len + 1.5;
+	dif = wolf->view_len;
 	if (H > SQUARE * dif && H < SQUARE * (dif + 0.1))
 		color = (color >> 1) & 0x7F7F7F;	
 	else if (H > SQUARE * (dif + 0.1) && H < SQUARE * (dif + 0.2))
@@ -233,14 +252,12 @@ int		add_shadow(t_wolf *wolf, int color, long double H)
 	else if (H > SQUARE * (dif + 0.4) && H < SQUARE * (dif + 0.6))
 		color = (color >> 1) & 0x4F4F4F;
 	else if (H > SQUARE * (dif + 0.6) && H < SQUARE * (dif + 0.8))
-		color = (color >> 1) & 0x4F4F4F;
-	else if (H > SQUARE * (dif + 0.8) && H < SQUARE * (dif + 1.0))
-		color = (color >> 2) & 0x3F3F3F;
-	else if (H > SQUARE * (dif + 1.0) && H < SQUARE * (dif + 1.2))
 		color = (color >> 2) & 0x2F2F2F;
-	else if (H > SQUARE * (dif + 1.2) && H < SQUARE * (dif + 1.4))
-		color = (color >> 1) & 0x0F0F0F;
-	else if (H > SQUARE * (dif + 1.4))
+	else if (H > SQUARE * (dif + 0.8) && H < SQUARE * (dif + 1.0))
+		color = (color >> 3) & 0x1F1F1F;
+	else if (H > SQUARE * (dif + 1.0) && H < SQUARE * (dif + 1.2))
+		color = (color >> 3) & 0x0F0F0F;
+	else if (H > SQUARE * (dif + 1.2))
 		color = 0x0;
 	return (color);
 }
@@ -249,43 +266,6 @@ int		add_shadow(t_wolf *wolf, int color, long double H)
  * height_line высота столба линии вертикальной текстуры
  * distance расстояние до этой текстуры.
 */
-
-/*
-void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
-{
-	long double	angle;
-	long double da;
-	double		path;
-	double		dx;
-	t_point		point;
-	int			j;
-
-	angle = atan((distance * 2.0) / SQUARE);
-	//angle = 1.5708;
-	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
-	//angle = 1.5708 - angle;
-	path = (HEIGHT - height_line) / 2.0;
-	da = angle / path;
-	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
-	j = HEIGHT - path;
-	point.x = x;
-	while (++j < HEIGHT)
-	{
-		point.color = 0x373737;
-		dx = tan(angle) * SQUARE / 2;
-		//ft_printf("dx [%f]\n", dx);
-		//point.color = add_shadow(wolf, point.color, SQUARE / (2.0 * cos(angle)));
-		point.color = add_shadow(wolf, point.color, dx);
-		//point.color = add_shadow(wolf, point.color, wolf->half_hei / cos(angle));
-		//ft_printf("H [%f]\n", height_line / 2 / cos(angle));
-		//point.color = add_shadow(wolf, point.color, distance);
-		point.y = j;
-		put_pixel_adr(wolf, point);
-		angle -= da;
-	}
-}
-*/
-
 void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 {
 	long double iter;
@@ -296,9 +276,6 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 	t_point		point;
 	int			j;
 
-	//angle = 1.5708;
-	//ft_printf("angle = {%f} path = {%f} da = [%f]\n", angle, path, da);
-	//angle = 1.5708 - angle;
 	path = (HEIGHT - height_line) / 2.0;
 	if (path < 0)
 		return ;
@@ -312,7 +289,7 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 	{
 		point.color = 0x373737;
 		g = path / sin(angle);
-		point.color = add_shadow(wolf, point.color, g - SQUARE);
+		point.color = add_shadow(wolf, point.color, g);
 		point.y = j;
 		put_pixel_adr(wolf, point);
 		path--;
@@ -358,12 +335,12 @@ int		check_wall_vert(t_wolf *wolf, t_ray *ray) //int x_gl, int y_gl)
 	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
 	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
-	if (wolf->map[y][x] != 0)
+	if (wolf->map[y][x] != 0 && wolf->map[y][x] != 9)
 	{
 		//ray->number_wall = wolf->map[y][x];
 		return (1);
 	}
-	if ( wolf->map[y][x - 1] != 0)
+	if (wolf->map[y][x - 1] != 0 && wolf->map[y][x - 1] != 9)
 	{
 		//ray->number_wall = wolf->map[y][x - 1];
 		return (1);
@@ -382,12 +359,12 @@ int		check_wall_gor(t_wolf *wolf, t_ray *ray)//int x_gl, int y_gl)
 	//ray->number_wall = 0;
 	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
-	if (wolf->map[y][x] != 0)
+	if (wolf->map[y][x] != 0 && wolf->map[y][x] != 9)
 	{
 		//ray->number_wall = wolf->map[y][x];
 		return (1);
 	}
-	if (wolf->map[y - 1][x] != 0)
+	if (wolf->map[y - 1][x] != 0 && wolf->map[y - 1][x] != 9)
 	{
 		//ray->number_wall = wolf->map[y - 1][x];
 		return (1);
@@ -496,6 +473,26 @@ void	clear_image(t_image *img_ptr)
 		temp[i] = 0;
 }
 
+int		check_pause_or_game_ever(t_wolf *wolf)
+{
+	if (wolf->pause)
+	{
+		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_start.img_ptr, 0 ,0);
+		return (1);
+	}
+	if (wolf->you_win)
+	{
+		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_you_win.img_ptr, 0 ,0);
+		return (1);
+	}
+	if (wolf->game_over)
+	{
+		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_game_over.img_ptr, 0 ,0);
+		return (1);
+	}
+	return (0);
+}
+
 int		press_enter(t_wolf *wolf)
 {
 	int		i;
@@ -505,6 +502,8 @@ int		press_enter(t_wolf *wolf)
 	double	R;
 
 	i = -1;
+	if (check_pause_or_game_ever(wolf))
+		return (0);
 	angle = wolf->pl.pov - wolf->pl.fov / 2; //Определяем начальный угол отрисовки.
 	//angle = wolf->pl.angle + M_PI / 6;
 	//print_floor(wolf);
@@ -534,7 +533,7 @@ int		press_enter(t_wolf *wolf)
 		drow_vertical_line(wolf, i, &ray, H);
 		angle += wolf->delta_wid;
 	}
-	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr,0 ,0);
+	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr, 0 ,0);
 	//mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->walls[0].img_ptr, 0 ,0);
 //	clear_image(&wolf->wall);
 	clear_image(&wolf->img);
@@ -567,10 +566,12 @@ void	press_up(t_wolf *wolf)
 	x = (dx * 10 + wolf->pl.x_pl) / SQUARE;
 	y = (dy * 10 + wolf->pl.y_pl) / SQUARE;
 	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
-	if (wolf->map[y][x] == 0)
+	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9)
 	{
 		wolf->pl.x_pl += dx;
 		wolf->pl.y_pl += dy;
+		if (wolf->map[y][x] == 9)
+			wolf->you_win = 1;
 	}
 	//ft_printf("angle [%f]\n", wolf->pl.pov);
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
@@ -589,10 +590,12 @@ void	press_down(t_wolf *wolf)
 	x = (wolf->pl.x_pl - dx * 10) / SQUARE;
 	y = (wolf->pl.y_pl - dy * 10) / SQUARE;
 	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
-	if (wolf->map[y][x] == 0)
+	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9)
 	{
 		wolf->pl.x_pl -= dx;
 		wolf->pl.y_pl -= dy;
+		if (wolf->map[y][x] == 9)
+			wolf->you_win = 1;
 	}
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
@@ -637,13 +640,15 @@ int		close_windows(void)
 void	increase_scale(t_wolf *wolf)
 {
 	wolf->view_len += 0.1;
-	press_enter(wolf);
+	ft_printf("view_len = [%f]\n", wolf->view_len);
 }
 
 void	reduce_scale(t_wolf *wolf)
 {
 	wolf->view_len -= 0.1;
-	press_enter(wolf);
+	ft_printf("view_len = [%f]\n", wolf->view_len);
+	if (wolf->view_len < 0)
+		wolf->game_over = 1;
 }
 
 int		press_key(int key, t_wolf *wolf)
@@ -651,10 +656,13 @@ int		press_key(int key, t_wolf *wolf)
 	ft_printf("key = {%d}\n", key);
 	if (key == K_ESC)
 		sys_err("Normal exit.\n");
-	if (key == K_Z)
+	else if (key == K_Z)
 		increase_scale(wolf);
-	if (key == K_X)
+	else if (key == K_X)
 		reduce_scale(wolf);
+	else if (key == K_ENTER)
+		wolf->pause = !wolf->pause;
+	press_enter(wolf);
 	return (0);
 }
 
@@ -687,6 +695,7 @@ int		check_time(t_wolf *wolf)
 	{
 		start_clock = cur_clock;
 		reduce_scale(wolf);
+		press_enter(wolf);
 	}
 	//ft_printf("Time = [%d]\n", start_clock);
 	return (0);
@@ -699,6 +708,7 @@ int		main(int ac, char **av)
 	if (ac != 2)
 		sys_err("Two arguments.\n");
 	init(&wolf);
+	//mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr,0 ,0);
 	//read_map(&wolf, av[1]);
 	parser(&wolf, av[1]);
 //	print_int_arr(&wolf);
@@ -708,6 +718,7 @@ int		main(int ac, char **av)
 	mlx_loop_hook(wolf.mlx, check_time, &wolf);
 //	mlx_mouse_hook(wolf.window, press_mouse, &wolf);
 	//mlx_hook(wolf.window, 3, 0xfffff, move_camera, &wolf);
+	mlx_put_image_to_window(wolf.mlx, wolf.window, wolf.img_you_win.img_ptr, 0 ,0);
 	mlx_hook(wolf.window, 2, 0xfffff, move_camera, &wolf);
 	mlx_hook(wolf.window, 6, 0xfffff, move_mouse, &wolf);
 	mlx_hook(wolf.window, 17, 0xfffff, close_windows, NULL);

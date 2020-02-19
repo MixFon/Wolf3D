@@ -85,8 +85,14 @@ typedef struct		s_wolf
 	int				width;
 	int				height;
 	int				side;
+	int				pause : 2;
+	int				game_over : 2;
+	int				you_win : 2;
 	s_player		pl;
 	t_image			img;
+	t_image			img_start;
+	t_image			img_game_over;
+	t_image			img_you_win;
 	t_image			walls[10];
 }					t_wolf;
 
