@@ -6,7 +6,7 @@
 #    By: widraugr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2018/11/29 13:07:44 by widraugr          #+#    #+#              #
-#    Updated: 2020/02/18 14:53:30 by widraugr         ###   ########.fr        #
+#    Updated: 2020/02/20 15:29:23 by widraugr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,13 +17,17 @@ LIBDIR = ./libft
 MLXDIR = minilibx_macos
 
 FILE_C = main.c\
-		 parser.c
-		#init.c\
-		#mandelbrot.c\
-		#nephroida.c\
-		#zoom.c
-#-Wall -Wextra -Werror 
-FLAGS =  -I libft -I include -I $(MLXDIR) 
+		 parser.c\
+		 add_shadow.c\
+		 init.c\
+		 check_wall.c\
+		 get_wall_hieght.c\
+		 press_down.c\
+		 press_lift.c\
+		 reduce_scale.c\
+		 read_strings.c
+#
+FLAGS = -Wall -Wextra -Werror -I libft -I include -I $(MLXDIR) 
 
 FMLXLIB = -L $(MLXDIR) -lmlx -framework OpenGL -framework AppKit
 
