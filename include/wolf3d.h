@@ -48,8 +48,6 @@ typedef struct		s_ray
 	long double		x_wall;
 	long double		y_wall;		
 	long double		distance;	//растояние до пересечения.
-	int				x_squre;
-	int				y_squre;
 	int				ver : 2;
 	int				number_wall;
 }					t_ray;
@@ -108,4 +106,7 @@ typedef struct		s_point
 void		clear_image(t_image *img_ptr);
 void		parser(t_wolf *wolf, char *name);
 void		start_position(t_wolf *wolf);
+/*
+** File asdf.c
+*/
 #endif

@@ -6,20 +6,22 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/20 12:34:18 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/20 13:41:16 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/wolf3d.h"
 
-void	init_image_in_squere_file_xpm(void *mlx, t_image *img, int size_squere , char *path)
+void	init_image_in_squere_file_xpm(void *mlx, t_image *img,
+		int size_squere , char *path)
 {
 	img->wid = size_squere;
 	img->hei = size_squere;
 	img->bits_adr = 4;
 	img->size_adr = size_squere;
 	img->endian = 0;
-	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx, path, &img->wid, &img->hei)))
+	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx,
+					path, &img->wid, &img->hei)))
 		sys_err("Error image back.\n");
 	img->data_adr = mlx_get_data_addr(img->img_ptr,
 			&img->bits_adr, &img->size_adr, &img->endian);
@@ -32,7 +34,8 @@ void	init_image_in_file_xpm(void *mlx, t_image *img, char *path)
 	img->bits_adr = 4;
 	img->size_adr = WIDTH;
 	img->endian = 0;
-	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx, path, &img->wid, &img->hei)))
+	if (!(img->img_ptr = mlx_xpm_file_to_image(mlx,
+					path, &img->wid, &img->hei)))
 		sys_err("Error image back.\n");
 	img->data_adr = mlx_get_data_addr(img->img_ptr,
 			&img->bits_adr, &img->size_adr, &img->endian);
@@ -63,7 +66,8 @@ void	init_image_walls_texture(t_wolf *wolf)
 	{
 		number = ft_itoa(i);
 		name_wall = ft_multi_strdup(3, WALLS, number, ".xpm"); 
-		init_image_in_squere_file_xpm(wolf->mlx, &wolf->walls[i], SQUARE, name_wall);
+		init_image_in_squere_file_xpm(wolf->mlx, &wolf->walls[i],
+				SQUARE, name_wall);
 		ft_printf("number = {%s}, name_wall = [%s]\n", number, name_wall);
 		ft_strdel(&number);
 		ft_strdel(&name_wall);
@@ -91,8 +95,10 @@ void	init(t_wolf *wolf)
 	init_image(wolf->mlx, &wolf->img, WIDTH, HEIGHT);
 	init_image_walls_texture(wolf);
 	init_image_in_file_xpm(wolf->mlx, &wolf->img_start, "./texture/Start.xpm");
-	init_image_in_file_xpm(wolf->mlx, &wolf->img_game_over, "./texture/Game_over.xpm");
-	init_image_in_file_xpm(wolf->mlx, &wolf->img_you_win, "./texture/you_win.xpm");
+	init_image_in_file_xpm(wolf->mlx, &wolf->img_game_over,
+			"./texture/Game_over.xpm");
+	init_image_in_file_xpm(wolf->mlx, &wolf->img_you_win,
+			"./texture/you_win.xpm");
 }
 
 void	put_pixel_adr(t_wolf *wolf, t_point point)
@@ -102,24 +108,16 @@ void	put_pixel_adr(t_wolf *wolf, t_point point)
 	if (point.x >= WIDTH || point.y >= HEIGHT || point.x <= 0 || point.y <= 0)
 		return ;
 	i = (point.x * wolf->img.bits_adr / 8) + (point.y * wolf->img.size_adr);
-	//wolf->img.data_adr[i] = point.color;
-	//ft_printf("color [%#x]\n", point.color);
-	//strncpy(&wolf->img.data_adr[i], (const char*)&point.color, 4);
 	wolf->img.data_adr[i] = point.color >> 24;
-	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
 	wolf->img.data_adr[++i] = point.color >> 16;
-	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
 	wolf->img.data_adr[++i] = point.color >> 8;
-	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
 	wolf->img.data_adr[++i] = 0;
-	//ft_printf("c [%#x]\n", wolf->img.data_adr[i]);
-	//exit(0);
 }
 
 void	infill_int_map(int *iarr, char **carr)
 {
-	int i;
-	char **tmp;
+	int		i;
+	char	**tmp;
 
 	i = -1;
 	tmp = carr;
@@ -128,10 +126,8 @@ void	infill_int_map(int *iarr, char **carr)
 		iarr[++i] = ft_atoi(*carr);
 		ft_strdel(carr);
 		carr++;
-		//ft_printf("%d ", iarr[i]);
 	}
 	free(tmp);
-	//ft_putchar('\n');
 }
 
 void	print_int_arr(t_wolf *wolf)
@@ -149,15 +145,6 @@ void	print_int_arr(t_wolf *wolf)
 	}
 }
 
-void	print_data_adr(char *data_adr)
-{
-	int i;
-
-	i = -1;
-	while(++i < SQUARE * 10)
-		ft_printf("c = [%#x] i = [%d]\n",data_adr[i], i);
-}
-
 int		get_color_point(t_ray *ray, char *data_adr, int num_pix, double H)
 {
 	int		color;
@@ -167,39 +154,18 @@ int		get_color_point(t_ray *ray, char *data_adr, int num_pix, double H)
 	double	scale;
 
 	scale = SQUARE / ray->distance;
-	//scale = ray->distance / (SQUARE);
-	//ft_printf("scale [%f]\n", scale);
-	//exit(0);
-	//scale = 0.3;
 	if (ray->ver)
 		x_o = (int)ray->y_wall & (SQUARE - 1);
 	else
 		x_o = (int)ray->x_wall & (SQUARE - 1);
-	//x_o = ray->y_squre;
 	y_o = (int)(num_pix * scale);
 	iter = 4 * (y_o * SQUARE + x_o);
-	//ft_printf("num_pix {%d} x_o = [%d] y_o = [%d]\n", num_pix,x_o, y_o);
-	//ft_printf("x_o = [%d] y = [%d] iter = {%d}\n", x_o, y_o, iter);
-	//exit(0);
-	//ft_printf("color [%#x]\n", color);
-	//iter--;
-	//iter = 0;
 	color = data_adr[iter];	
-	//ft_printf("color [%#x]\n", color);
 	color = color << 8;
-	//ft_printf("color [%#x]\n", color);
 	color = color | (data_adr[++iter] & 0xff);
-	//ft_printf("color [%#x]\n", color);
 	color = color << 8;
-	//ft_printf("color [%#x]\n", color);
 	color = color | (data_adr[++iter] & 0xff);
-	//ft_printf("color [%#x]\n", color);
 	color = color << 8;
-	//else if (H > SQUARE * (dif + 1.5))
-	//	color = (color >> 1) & 0x0F0F0F;
-	//ft_printf("color [%#x]\n", color);
-	//print_data_adr(data_adr);
-	//exit(0);
 	return (color);	
 }
 
@@ -232,11 +198,10 @@ int		add_shadow(t_wolf *wolf, int color, long double H)
  * height_line высота столба линии вертикальной текстуры
  * distance расстояние до этой текстуры.
 */
-void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
+void	print_floor(t_wolf *wolf, int x,
+		long double height_line, double distance)
 {
-	long double iter;
 	long double angle;
-	long double	dx;
 	long double	g;
 	double		path;
 	t_point		point;
@@ -245,10 +210,7 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 	path = (HEIGHT - height_line) / 2.0;
 	if (path < 0)
 		return ;
-	//dx = path / wolf->view_len * SQUARE * 10;
 	angle = atan((distance * 2.0) / SQUARE);
-	//ft_printf("HEIGHT = {%d} height_line = {%Lf}\n", HEIGHT, height_line);
-	//ft_printf("angle = {%Lf} path = {%f}\n", angle, path);
 	j = HEIGHT - path;
 	point.x = x;
 	while (++j < HEIGHT)
@@ -261,56 +223,52 @@ void	print_floor(t_wolf *wolf, int x,long double height_line, double distance)
 		path--;
 	}
 }
-void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray, double H)
+void	drow_vertical_line(t_wolf *wolf, int x, t_ray *ray, double h)
 {
 	double	j;
-	int		num_pix;
+	int		num;
 	int		len;
 	t_point point;
 	
-	num_pix = -1;
+	num = -1;
 	j = wolf->half_hei - (ray->distance / 2.0);
 	if (j < 0)
 	{
-		num_pix = (ray->distance - HEIGHT) / 2;
+		num = (ray->distance - HEIGHT) / 2;
 		j = 0;
 	}
-	//point.color = 0xFFFF;
 	point.x = x;
 	len = wolf->half_hei + (ray->distance / 2.0);
 	while (++j < len)
 	{
 		if (j > HEIGHT)
 			break;
-		point.color = get_color_point(ray, wolf->walls[ray->number_wall].data_adr, ++num_pix, H);
-		point.color = add_shadow(wolf, point.color, H);
+		point.color = get_color_point(ray,
+				wolf->walls[ray->number_wall].data_adr, ++num, h);
+		point.color = add_shadow(wolf, point.color, h);
 		point.y = j;
 		put_pixel_adr(wolf, point);
 	}
-	print_floor(wolf, x, ray->distance, H);
+	print_floor(wolf, x, ray->distance, h);
 }
 
-int		check_wall_vert(t_wolf *wolf, t_ray *ray) //int x_gl, int y_gl)
+int		check_wall_vert(t_wolf *wolf, t_ray *ray)
 {
 	int x;
 	int y;
 
 	x = ray->x_wall / SQUARE;
 	y = ray->y_wall / SQUARE;
-	//ray->number_wall = 0;
 	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
-	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
 	if (wolf->map[y][x] != 0)
 	{
-		//ray->number_wall = wolf->map[y][x];
 		if (!wolf->bl_compass)
 			ray->number_wall = wolf->map[y][x];
 		return (1);
 	}
 	if (wolf->map[y][x - 1] != 0)
 	{
-		//ray->number_wall = wolf->map[y][x - 1];
 		if (!wolf->bl_compass)
 			ray->number_wall = wolf->map[y][x - 1];
 		return (1);
@@ -318,27 +276,23 @@ int		check_wall_vert(t_wolf *wolf, t_ray *ray) //int x_gl, int y_gl)
 	return (0);
 }
 
-int		check_wall_gor(t_wolf *wolf, t_ray *ray)//int x_gl, int y_gl)
+int		check_wall_gor(t_wolf *wolf, t_ray *ray)
 {
 	int x;
 	int y;
 
 	x = ray->x_wall / SQUARE;
 	y = ray->y_wall / SQUARE;
-	//ft_printf("dif squre x = [%d] y = {%d}\n", x, y);
-	//ray->number_wall = 0;
 	if (x < 0 || y < 0 || y > wolf->height - 1 || x > wolf->width - 1)
 		return (1);
 	if (wolf->map[y][x] != 0)
 	{
-		//ray->number_wall = wolf->map[y][x];
 		if (!wolf->bl_compass)
 			ray->number_wall = wolf->map[y][x];
 		return (1);
 	}
 	if (wolf->map[y - 1][x] != 0)
 	{
-		//ray->number_wall = wolf->map[y - 1][x];
 		if (!wolf->bl_compass)
 			ray->number_wall = wolf->map[y - 1][x];
 		return (1);
@@ -346,36 +300,56 @@ int		check_wall_gor(t_wolf *wolf, t_ray *ray)//int x_gl, int y_gl)
 	return (0);
 }
 
+void	direction_gor(t_wolf *wolf, t_ray *gor, int *tmp, double angle)
+{
+	if ((angle > 0 && angle < 180) ||
+			(angle < -180 && angle > -360) || angle > 360)
+	{
+		*tmp = SQUARE;
+		gor->y_wall = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE + SQUARE;
+		gor->number_wall = 4;
+	}
+	else
+	{
+		*tmp = (-1) * SQUARE;
+		gor->y_wall = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE;
+		gor->number_wall = 3;
+	}
+}
+
 t_ray		get_len_ray_gor(t_wolf *wolf, double k, double b, double angle)
 {
 	t_ray	gor;
 	int		tmp;
 
-	if ((angle > 0 && angle < 180) || (angle < -180 && angle > -360) || angle > 360)
-	{
-		tmp = SQUARE;
-		gor.y_wall = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE + SQUARE;
-		gor.number_wall = 4;
-	}
-	else
-	{
-		tmp = (-1) * SQUARE;
-		gor.y_wall = wolf->pl.y_pl - wolf->pl.y_pl % SQUARE;// + SQUARE;
-		gor.number_wall = 3;
-	}
+	direction_gor(wolf, &gor, &tmp, angle);
 	while (1)
 	{
 		gor.x_wall = (gor.y_wall - wolf->pl.y_pl) / k + wolf->pl.x_pl;
-		//ft_printf("gor.x = [%d] gor.y = {%d}\n", gor.x_wall, gor.y_wall);
-		if (check_wall_gor(wolf, &gor))// gor.x_wall, gor.y_wall))
+		if (check_wall_gor(wolf, &gor))
 			break ;
 		gor.y_wall += tmp;
 	}
-	//ft_printf("gor.x = [%d] gor.y = {%d}\n", gor.x, gor.y);
 	gor.ver = 0;
-	gor.x_squre = (int)gor.x_wall & (SQUARE - 1);
-	gor.distance = sqrt(pow(gor.x_wall - wolf->pl.x_pl, 2) + pow(gor.y_wall - wolf->pl.y_pl, 2));
+	gor.distance = sqrt(pow(gor.x_wall - wolf->pl.x_pl, 2) +
+			pow(gor.y_wall - wolf->pl.y_pl, 2));
 	return (gor);
+}
+
+void	direction_ver(t_wolf *wolf, t_ray *ver, int *tmp, double angle)
+{
+	if ((angle > -90 && angle < 90) || (angle > 270) || (angle < -270))
+	{
+		*tmp = SQUARE;
+		ver->x_wall = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE + SQUARE;
+		ver->number_wall = 1;
+	}
+	else
+	{
+		*tmp = (-1) * SQUARE;
+		ver->x_wall = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE;
+		ver->number_wall = 2;
+	}
 }
 
 t_ray		get_len_ray_ver(t_wolf *wolf, double k, double b, double angle)
@@ -383,29 +357,17 @@ t_ray		get_len_ray_ver(t_wolf *wolf, double k, double b, double angle)
 	t_ray	ver;
 	int		tmp;
 
-	if ((angle > -90 && angle < 90) || (angle > 270) || (angle < -270))
-	{
-		tmp = SQUARE;
-		ver.x_wall = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE + SQUARE;
-		ver.number_wall = 1;
-	}
-	else
-	{
-		tmp = (-1) * SQUARE;
-		ver.x_wall = wolf->pl.x_pl - wolf->pl.x_pl % SQUARE;// + SQUARE;
-		ver.number_wall = 2;
-	}
+	direction_ver(wolf, &ver, &tmp, angle);
 	while (1)
 	{
 		ver.y_wall = wolf->pl.y_pl + k * (ver.x_wall - wolf->pl.x_pl);
-		if (check_wall_vert(wolf, &ver))// ver.x_wall, ver.y_wall))
+		if (check_wall_vert(wolf, &ver))
 			break ;
-		ver.x_wall += tmp;//SQUARE;
+		ver.x_wall += tmp;
 	}
-	//ft_printf("ver.x = [%d] ver.y = {%d}\n", ver.x, ver.y);
-	//ft_printf("ver.y = [%d] \n",ver.y & 0x1f);
 	ver.ver = 1;
-	ver.distance = sqrt(pow(ver.x_wall - wolf->pl.x_pl, 2) + pow(ver.y_wall - wolf->pl.y_pl, 2));
+	ver.distance = sqrt(pow(ver.x_wall - wolf->pl.x_pl, 2) +
+			pow(ver.y_wall - wolf->pl.y_pl, 2));
 	return (ver);
 }
 
@@ -416,22 +378,13 @@ t_ray		get_wall_height(t_wolf *wolf, double angle)
 	t_ray	r_v;
 	t_ray	r_g;
 
-	//if (angle > 90)
-	//	angle = -1 * (180 - angle);
 	k = tan(angle*M_PI/180);
 	b = wolf->pl.y_pl - k * wolf->pl.x_pl;
 	if (k == 0)
 		return (get_len_ray_ver(wolf, k, b, angle));
-	//k = tan(angle);
-	//if (angle < 0)
-	//	k = k * (-1);
-	//k = tan(15.9454*M_PI/180);
-	//k = tan(0*M_PI/180);
 	r_v = get_len_ray_ver(wolf, k, b, angle);
 	r_g = get_len_ray_gor(wolf, k, b, angle);
-	//ft_printf("h_v = [%d] h_g = {%d}\n", h_v, h_g);
 	return ((r_v.distance < r_g.distance) ? r_v : r_g);
-	//ft_printf("tan(-30) = {%f}\n", tan(330*M_PI/180));
 }
 
 void	clear_image(t_image *img_ptr)
@@ -451,17 +404,20 @@ int		check_pause_or_game_ever(t_wolf *wolf)
 {
 	if (wolf->bl_you_win)
 	{
-		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_you_win.img_ptr, 0 ,0);
+		mlx_put_image_to_window(wolf->mlx, wolf->window,
+				wolf->img_you_win.img_ptr, 0 ,0);
 		return (1);
 	}
 	if (wolf->bl_game_over)
 	{
-		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_game_over.img_ptr, 0 ,0);
+		mlx_put_image_to_window(wolf->mlx, wolf->window,
+				wolf->img_game_over.img_ptr, 0 ,0);
 		return (1);
 	}
 	if (wolf->bl_pause)
 	{
-		mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img_start.img_ptr, 0 ,0);
+		mlx_put_image_to_window(wolf->mlx, wolf->window,
+				wolf->img_start.img_ptr, 0 ,0);
 		return (1);
 	}
 	return (0);
@@ -472,44 +428,22 @@ int		press_enter(t_wolf *wolf)
 	int		i;
 	t_ray	ray;
 	double	angle;
-	double	H;
-	double	R;
+	double	distance_fish;
 
 	i = -1;
 	if (check_pause_or_game_ever(wolf))
 		return (0);
-	angle = wolf->pl.pov - wolf->pl.fov / 2; //Определяем начальный угол отрисовки.
-	//angle = wolf->pl.angle + M_PI / 6;
-	//print_floor(wolf);
+	angle = wolf->pl.pov - wolf->pl.fov / 2;
 	while (++i < WIDTH)
 	{
-		//ft_printf("cos(delta) {%f}\n", cos(delta*M_PI/180));
 		ray = get_wall_height(wolf, angle);
-		//ft_printf("h = {%f}\n", h);
-		//h = h * cos(delta*M_PI/180);
-		H = ray.distance;
+		distance_fish = ray.distance;
 		ray.distance = ray.distance * wolf->cos_arr[i];
-		/*
-		if (H > wolf->view_len * SQUARE * 2)
-		{
-			angle += wolf->delta_wid;
-			continue;
-		}
-		*/
-		//h = fabs(h);
-		//ft_printf("h = {%d}\n", h);
-		//if (h == 0)
-		//	h = 1;
-		//ray.distance = SQUARE * 928.0 / ray.distance;
 		ray.distance = wolf->for_squre / ray.distance;
-		//ft_printf("ray.distance = {%Lf}\n", ray.distance);
-		//ft_printf("distance = {%Lf}\n", ray.distance);
-		drow_vertical_line(wolf, i, &ray, H);
+		drow_vertical_line(wolf, i, &ray, distance_fish);
 		angle += wolf->delta_wid;
 	}
 	mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr, 0 ,0);
-	//mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->walls[0].img_ptr, 0 ,0);
-//	clear_image(&wolf->wall);
 	clear_image(&wolf->img);
 	return (0);
 }
@@ -585,14 +519,11 @@ void	press_up(t_wolf *wolf)
 	dy = STEP * sin(wolf->pl.pov*M_PI/180);
 	x = (dx * 10 + wolf->pl.x_pl) / SQUARE;
 	y = (dy * 10 + wolf->pl.y_pl) / SQUARE;
-	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
 	if (check_number_in_map(wolf, x, y))
 	{
 		wolf->pl.x_pl += dx;
 		wolf->pl.y_pl += dy;
 	}
-	//ft_printf("angle [%f]\n", wolf->pl.pov);
-	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
 }
 
@@ -607,13 +538,11 @@ void	press_down(t_wolf *wolf)
 	dy = STEP * sin(wolf->pl.pov*M_PI/180);
 	x = (wolf->pl.x_pl - dx * 10) / SQUARE;
 	y = (wolf->pl.y_pl - dy * 10) / SQUARE;
-	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
 	if (check_number_in_map(wolf, x, y))
 	{
 		wolf->pl.x_pl -= dx;
 		wolf->pl.y_pl -= dy;
 	}
-	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
 }
 
@@ -689,7 +618,7 @@ int		press_key(int key, t_wolf *wolf)
 	press_enter(wolf);
 	return (0);
 }
-
+//----------------------------------------------------------------------------------------------
 void	calculate_tan_cos(t_wolf *wolf)
 {
 	int		i;
@@ -721,7 +650,6 @@ int		check_time(t_wolf *wolf)
 		reduce_scale(wolf);
 		press_enter(wolf);
 	}
-	//ft_printf("Time = [%d]\n", start_clock);
 	return (0);
 }
 
@@ -766,19 +694,14 @@ int		main(int ac, char **av)
 	if (ac != 2)
 		sys_err("Two arguments.\n");
 	init(&wolf);
-	//mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr,0 ,0);
-	//read_map(&wolf, av[1]);
 	parser(&wolf, av[1]);
 	print_int_arr(&wolf);
 	start_position(&wolf);
-	ft_printf("s_x = [%d] s_y = [%d]\n",wolf.pl.x_pl, wolf.pl.y_pl);
-//	exit(0);
 	calculate_tan_cos(&wolf);
 	mlx_key_hook(wolf.window, press_key, &wolf);
 	mlx_loop_hook(wolf.mlx, check_time, &wolf);
-//	mlx_mouse_hook(wolf.window, press_mouse, &wolf);
-	//mlx_hook(wolf.window, 3, 0xfffff, move_camera, &wolf);
-	mlx_put_image_to_window(wolf.mlx, wolf.window, wolf.img_start.img_ptr, 0 ,0);
+	mlx_put_image_to_window(wolf.mlx, wolf.window,
+			wolf.img_start.img_ptr, 0 ,0);
 	mlx_hook(wolf.window, 2, 0xfffff, move_camera, &wolf);
 	mlx_hook(wolf.window, 6, 0xfffff, move_mouse, &wolf);
 	mlx_hook(wolf.window, 17, 0xfffff, close_windows, NULL);
