@@ -6,7 +6,7 @@
 /*   By: widraugr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/10 08:46:55 by widraugr          #+#    #+#             */
-/*   Updated: 2020/02/19 15:19:17 by widraugr         ###   ########.fr       */
+/*   Updated: 2020/02/20 12:34:18 by widraugr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ void	init(t_wolf *wolf)
 {
 	wolf->pl.x_pl = 160;
 	wolf->pl.y_pl = 160;
-	wolf->pl.pov = 90;
+	wolf->pl.pov = 0;
 	wolf->side = 1;
 	wolf->bl_pause = 1;
 	wolf->bl_you_win = 0;
@@ -86,7 +86,6 @@ void	init(t_wolf *wolf)
 	wolf->view_len = 3.0;
 	wolf->half_hei = HEIGHT / 2;
 	wolf->for_squre = SQUARE * 928;
-	//	wolf->delta_fov = 0.0;
 	wolf->mlx = mlx_init();
 	wolf->window = mlx_new_window(wolf->mlx, WIDTH, HEIGHT, "Wolf3D");
 	init_image(wolf->mlx, &wolf->img, WIDTH, HEIGHT);
@@ -148,40 +147,6 @@ void	print_int_arr(t_wolf *wolf)
 			ft_printf("%d ", wolf->map[i][j]);
 		ft_putchar('\n');
 	}
-}
-
-void	read_map(t_wolf *wolf, char *name)
-{
-	int		fd;
-	char	*line;
-	int		count;
-	char	**arr;
-	int		i;
-
-	line = NULL;
-	i = 0;
-	if ((fd = open(name, O_RDONLY)) == -1)
-		sys_err("Error open file.\n");
-	get_next_line(fd, &line);
-	count = ft_strlen(line);
-	if (!(wolf->map = (int **)malloc(sizeof(int*) * count)))
-		sys_err("Error malloc\n");
-	if (!(wolf->map[0] = (int *)malloc(sizeof(int) * count)))
-		sys_err("Error malloc\n");
-	arr = ft_strsplit(line, ' ');
-	infill_int_map(wolf->map[0], arr);
-	//delete_arr(&arr);
-	ft_strdel(&line);
-	while(get_next_line(fd, &line))
-	{
-		if (!(wolf->map[++i] = (int *)malloc(sizeof(int) * count)))
-			sys_err("Error malloc\n");
-		arr = ft_strsplit(line, ' ');
-		infill_int_map(wolf->map[i], arr);
-		ft_strdel(&line);
-	}
-	//print_int_arr(wolf->map);
-	//exit(0);
 }
 
 void	print_data_adr(char *data_adr)
@@ -569,6 +534,46 @@ void	find_fire(t_wolf *wolf, int x, int y)
 	wolf->view_len += 1;
 }
 
+void	delete_int_arr(t_wolf *wolf)
+{
+	int **iter;	
+	int i;
+
+	iter = wolf->map;
+	i = -1;
+	while (++i < wolf->height)
+		free(iter[i]);
+	free(wolf->map);
+	wolf->map = NULL;
+}
+
+int		check_number_in_map(t_wolf *wolf, int x, int y)
+{
+	if (wolf->map[y][x] == 0)
+		return (1);
+	if (wolf->map[y][x] == 9)
+	{
+		wolf->bl_you_win = 1;
+		return (1);
+	}
+	if (wolf->map[y][x] == 8)
+	{
+		find_fire(wolf, x, y);
+		return (1);
+	}
+	if (wolf->map[y][x] == 10)
+	{
+		delete_int_arr(wolf);
+		parser(wolf, "./maps/level2.map");
+		print_int_arr(wolf);
+		wolf->pl.pov = 0;
+		wolf->bl_pause = !wolf->bl_pause;
+		start_position(wolf);
+		return (1);
+	}
+	return (0);
+}
+
 void	press_up(t_wolf *wolf)
 {
 	double dx;
@@ -581,14 +586,10 @@ void	press_up(t_wolf *wolf)
 	x = (dx * 10 + wolf->pl.x_pl) / SQUARE;
 	y = (dy * 10 + wolf->pl.y_pl) / SQUARE;
 	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
-	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9 || wolf->map[y][x] == 8)
+	if (check_number_in_map(wolf, x, y))
 	{
 		wolf->pl.x_pl += dx;
 		wolf->pl.y_pl += dy;
-		if (wolf->map[y][x] == 9)
-			wolf->bl_you_win = 1;
-		else if (wolf->map[y][x] == 8)
-			find_fire(wolf, x, y);
 	}
 	//ft_printf("angle [%f]\n", wolf->pl.pov);
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
@@ -607,14 +608,10 @@ void	press_down(t_wolf *wolf)
 	x = (wolf->pl.x_pl - dx * 10) / SQUARE;
 	y = (wolf->pl.y_pl - dy * 10) / SQUARE;
 	//ft_printf("x = [%d] y = [%d] map = [%d]\n", y, x, wolf->map[y][x]);
-	if (wolf->map[y][x] == 0 || wolf->map[y][x] == 9 || wolf->map[y][x] == 8)
+	if (check_number_in_map(wolf, x, y))
 	{
 		wolf->pl.x_pl -= dx;
 		wolf->pl.y_pl -= dy;
-		if (wolf->map[y][x] == 9)
-			wolf->bl_you_win = 1;
-		else if (wolf->map[y][x] == 8)
-			find_fire(wolf, x, y);
 	}
 	//ft_printf("dx = [%d] dy = [%d]\n", wolf->pl.x_pl, wolf->pl.y_pl);
 	press_enter(wolf); 
@@ -728,6 +725,40 @@ int		check_time(t_wolf *wolf)
 	return (0);
 }
 
+void	infill_position(t_wolf *wolf, int i, int j)
+{
+	wolf->pl.x_pl = SQUARE * j + SQUARE / 2;
+	wolf->pl.y_pl = SQUARE * i + SQUARE / 2;
+	wolf->map[i][j] = 0;
+}
+
+void	start_position(t_wolf *wolf)
+{
+	int		i;
+	int		j;
+	int		bl;
+
+	i = -1;
+	bl = 0;
+	while (++i < wolf->height)
+	{
+		j = -1;
+		while (++j < wolf->width)
+		{
+			if (wolf->map[i][j] == 0 && bl == 0)	
+			{
+				infill_position(wolf, i, j);
+				bl = 1;
+			}
+			if (wolf->map[i][j] < 0)	
+			{
+				infill_position(wolf, i, j);
+				return ;
+			}
+		}
+	}
+}
+
 int		main(int ac, char **av)
 {
 	t_wolf wolf;
@@ -738,7 +769,9 @@ int		main(int ac, char **av)
 	//mlx_put_image_to_window(wolf->mlx, wolf->window, wolf->img.img_ptr,0 ,0);
 	//read_map(&wolf, av[1]);
 	parser(&wolf, av[1]);
-//	print_int_arr(&wolf);
+	print_int_arr(&wolf);
+	start_position(&wolf);
+	ft_printf("s_x = [%d] s_y = [%d]\n",wolf.pl.x_pl, wolf.pl.y_pl);
 //	exit(0);
 	calculate_tan_cos(&wolf);
 	mlx_key_hook(wolf.window, press_key, &wolf);

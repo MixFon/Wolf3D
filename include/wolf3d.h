@@ -16,7 +16,7 @@
 
 # define STEP			4
 
-# define ANGLE			2
+# define ANGLE			5
 
 # define K_ENTER		36
 # define K_ESC			53
@@ -28,7 +28,7 @@
 # define K_X			7
 # define K_C			8
 
-# define COUNT_WALLS	10
+# define COUNT_WALLS	11
 
 # define WALLS		"./texture/WALL"
 
@@ -107,4 +107,5 @@ typedef struct		s_point
 
 void		clear_image(t_image *img_ptr);
 void		parser(t_wolf *wolf, char *name);
+void		start_position(t_wolf *wolf);
 #endif
