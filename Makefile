@@ -6,7 +6,7 @@
 #    By: widraugr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2018/11/29 13:07:44 by widraugr          #+#    #+#              #
-#    Updated: 2020/02/20 15:29:23 by widraugr         ###   ########.fr        #
+#    Updated: 2020/02/20 17:15:27 by widraugr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ FILE_C = main.c\
 		 press_lift.c\
 		 reduce_scale.c\
 		 read_strings.c
-#
+
 FLAGS = -Wall -Wextra -Werror -I libft -I include -I $(MLXDIR) 
 
 FMLXLIB = -L $(MLXDIR) -lmlx -framework OpenGL -framework AppKit
@@ -46,7 +46,7 @@ all : $(NAME)
 $(NAME): $(DIROBJ) $(OBJ) 
 	make -C $(LIBDIR)
 	gcc $(FLAGS) $(OBJ) $(FLIB) $(FMLXLIB) -o $(NAME)
-	#make clean -C $(LIBDIR)
+	make clean -C $(LIBDIR)
 
 $(DIROBJ)%.o : $(DIRC)%.c
 	gcc -g $(FLAGS) -c $< -o $@
@@ -59,6 +59,6 @@ clean:
 	
 fclean: clean
 	/bin/rm -f $(NAME)
-	#make fclean -C $(LIBDIR)
+	make fclean -C $(LIBDIR)
 	
 re: fclean all 
